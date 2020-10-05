@@ -143,6 +143,10 @@ public class MybatisGenerator {
         context.addPluginConfiguration(pluginConfiguration);
 
         pluginConfiguration = new PluginConfiguration();
+        pluginConfiguration.setConfigurationType("com.xstudio.mybatis.extend.plugins.XstudioModelPlugin");
+        context.addPluginConfiguration(pluginConfiguration);
+
+        pluginConfiguration = new PluginConfiguration();
         pluginConfiguration.setConfigurationType("com.xstudio.mybatis.extend.plugins.XstudioServicePlugin");
         pluginConfiguration.addProperty("serviceRootInterface", properties.getXstudioProperty().getServiceRootInterface());
         pluginConfiguration.addProperty("serviceTargetPackage", properties.getXstudioProperty().getServiceTargetPackage());

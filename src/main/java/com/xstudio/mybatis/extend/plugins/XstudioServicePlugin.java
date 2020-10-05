@@ -126,7 +126,6 @@ public class XstudioServicePlugin extends PluginAdapter {
         setDefaults.addAnnotation("@Override");
         setDefaults.setVisibility(JavaVisibility.PUBLIC);
         setDefaults.addParameter(new Parameter(baseRecordTypeFqjt, "record"));
-        setDefaults.addBodyLine("// todo");
         topLevelClass.addImportedType(baseRecordTypeFqjt);
 
 
