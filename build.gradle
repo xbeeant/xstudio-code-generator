@@ -2,14 +2,46 @@ plugins {
     id 'java'
 }
 
-group 'com.xstudio.mybatis'
+apply plugin: 'jacoco'
+apply plugin: "maven-publish"
+
+group 'com.xstudio'
 version '1.0-SNAPSHOT'
 
 repositories {
+    maven {
+        url "https://maven.pkg.github.com/xbeeant/java-code-merger"
+    }
+    maven {
+        url "https://maven.aliyun.com/repository/public"
+    }
+    maven {
+        url "https://maven.aliyun.com/repository/jcenter"
+    }
+    maven {
+        url "https://maven.aliyun.com/repository/spring"
+    }
+    maven {
+        url "https://maven.aliyun.com/repository/spring-plugin"
+    }
+    maven {
+        url "https://maven.aliyun.com/repository/gradle-plugin"
+    }
+    maven {
+        url "https://maven.aliyun.com/repository/google"
+    }
+    maven {
+        url "https://maven.aliyun.com/repository/grails-core"
+    }
+    maven {
+        url "https://maven.aliyun.com/repository/apache-snapshots"
+    }
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
+    compile 'com.xstudio:java-merger:1.0-SNAPSHOT'
 
     compile group: 'org.mybatis.generator', name: 'mybatis-generator-core', version: '1.4.0'
 
@@ -19,6 +51,92 @@ dependencies {
     compile group: 'mysql', name: 'mysql-connector-java', version: '8.0.11'
     compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.48'
     compile group: 'org.mariadb.jdbc', name: 'mariadb-java-client', version: '2.6.0'
+}
 
-    implementation 'com.github.javaparser:javaparser-core:3.16.1'
+
+test {
+    useJUnitPlatform()
+}
+
+task allTask {
+    println project.name
+}
+
+compileJava.options.encoding = "UTF-8"
+compileTestJava.options.encoding = "UTF-8"
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+// 打包源码
+task sourceJar(type: Jar, dependsOn: classes) {
+    classifier 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives javadocJar
+    archives sourceJar
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/xbeeant/xstudio-code-generator")
+            credentials {
+                username = "huangxb0512@gmail.com"
+                password = System.getenv("token")
+            }
+        }
+    }
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = 'mybatis-code-generator'
+            from components.java
+            artifact sourceJar
+            artifact javadocJar
+            pom {
+                name = "mybatis-code-generator"
+                description = "xstudio-code-generator"
+                url = "https://maven.pkg.github.com/xbeeant/xstudio-code-generator"
+                licenses {
+                    license {
+                        name = "MIT License"
+                        url = "https://mit-license.org/"
+                    }
+                }
+                developers {
+                    developer {
+                        id = "beeant0512"
+                        name = "Xiaobiao Huang"
+                        email = "huangxb0512@gmail.com"
+                    }
+                }
+                scm {
+                    connection = "https://maven.pkg.github.com/xbeeant/xstudio-code-generator"
+                    developerConnection = "https://maven.pkg.github.com/xbeeant/xstudio-code-generator"
+                    url = "https://maven.pkg.github.com/xbeeant/xstudio-code-generator"
+                }
+            }
+        }
+    }
+}
+
+javadoc {
+    if(JavaVersion.current().isJava9Compatible()) {
+        options.addBooleanOption('html5', true)
+    }
+    options {
+        encoding "UTF-8"
+        charSet 'UTF-8'
+        author true
+        version true
+    }
 }

@@ -25,6 +25,7 @@ public class MybatisGenerator {
     /**
      * 生成
      *
+     * @param properties 属性
      * @throws InterruptedException          中断异常
      * @throws SQLException                  sqlexception异常
      * @throws IOException                   ioexception
@@ -79,6 +80,12 @@ public class MybatisGenerator {
         myBatisGenerator.generate(null);
     }
 
+    /**
+     * 插件
+     *
+     * @param context    上下文
+     * @param properties 属性
+     */
     private void plugins(Context context, Properties properties) {
 
         // ==============================
@@ -158,6 +165,13 @@ public class MybatisGenerator {
         context.addPluginConfiguration(pluginConfiguration);
     }
 
+    /**
+     * 表配置
+     *
+     * @param property 属性
+     * @param context  上下文
+     * @return {@link TableConfiguration}
+     */
     private TableConfiguration tableConfiguration(TableProperty property, Context context) {
         TableConfiguration configuration = new TableConfiguration(context);
         configuration.setTableName(property.getTableName());
@@ -189,6 +203,7 @@ public class MybatisGenerator {
     /**
      * JavaClientGeneratorConfiguration
      *
+     * @param property 属性
      * @return {@link JavaClientGeneratorConfiguration}
      */
     private JavaClientGeneratorConfiguration javaClientGeneratorConfiguration(JavaClientProperty property) {
@@ -212,6 +227,7 @@ public class MybatisGenerator {
     /**
      * SqlMapGeneratorConfiguration
      *
+     * @param property 属性
      * @return {@link SqlMapGeneratorConfiguration}
      */
     private SqlMapGeneratorConfiguration sqlMapGeneratorConfiguration(SqlMapProperty property) {
@@ -225,6 +241,7 @@ public class MybatisGenerator {
     /**
      * JavaModelGeneratorConfiguration
      *
+     * @param property 属性
      * @return {@link JavaModelGeneratorConfiguration}
      */
     private JavaModelGeneratorConfiguration javaModelGeneratorConfiguration(JavaModelProperty property) {
@@ -305,6 +322,7 @@ public class MybatisGenerator {
     /**
      * JDBCConnectionConfiguration
      *
+     * @param property 属性
      * @return {@link JDBCConnectionConfiguration}
      */
     private JDBCConnectionConfiguration jdbcConnectionConfiguration(ConnectionProperty property) {
