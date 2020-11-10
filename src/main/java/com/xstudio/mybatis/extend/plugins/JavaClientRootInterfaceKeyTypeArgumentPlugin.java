@@ -32,6 +32,4 @@ public class JavaClientRootInterfaceKeyTypeArgumentPlugin extends PluginAdapter 
 
         return super.clientGenerated(interfaze, introspectedTable);
     }
-
-
 }

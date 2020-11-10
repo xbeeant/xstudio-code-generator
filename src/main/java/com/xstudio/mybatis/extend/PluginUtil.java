@@ -12,6 +12,12 @@ import org.mybatis.generator.api.dom.xml.XmlElement;
  * @version 2019/5/1
  */
 public class PluginUtil {
+    /**
+     * 得到主键的FullyQualifiedJavaType
+     *
+     * @param introspectedTable 表
+     * @return {@link FullyQualifiedJavaType}
+     */
     public static FullyQualifiedJavaType getKeyFqjt(IntrospectedTable introspectedTable) {
         String primaryKeyType = introspectedTable.getPrimaryKeyType();
         FullyQualifiedJavaType primaryKeyTypeFqjt = new FullyQualifiedJavaType(primaryKeyType);
@@ -26,6 +32,13 @@ public class PluginUtil {
         return primaryKeyTypeFqjt;
     }
 
+    /**
+     * 添加If元素
+     *
+     * @param whereElement where元素
+     * @param column       列
+     * @param prefix       前缀
+     */
     public static void addIfElement(XmlElement whereElement, IntrospectedColumn column, String prefix) {
         XmlElement ifElement = new XmlElement("if");
         StringBuilder sb = new StringBuilder();
@@ -91,6 +104,12 @@ public class PluginUtil {
         }
     }
 
+    /**
+     * 添加include元素
+     *
+     * @param xmlElement xml元素
+     * @param include    包括
+     */
     public static void addInclude(XmlElement xmlElement, String include) {
         XmlElement includeElement = new XmlElement("include");
         includeElement.addAttribute(new Attribute("refid", include));

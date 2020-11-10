@@ -1,10 +1,13 @@
 package com.xstudio.mybatis.po;
 
+import java.io.Serializable;
+
 /**
  * @author xiaobiao
  * @version 2020/10/5
  */
-public class XstudioProperty {
+public class XstudioProperty implements Serializable {
+    private static final long serialVersionUID = -6965607450900553487L;
     private String serviceRootInterface;
 
     private String serviceTargetPackage;

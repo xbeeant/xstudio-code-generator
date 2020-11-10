@@ -1,10 +1,15 @@
 package com.xstudio.mybatis.po;
 
+import org.mybatis.generator.internal.DefaultShellCallback;
+
+import java.io.Serializable;
+
 /**
  * @author xiaobiao
  * @version 2020/10/2
  */
-public class Properties {
+public class Properties implements Serializable {
+    private static final long serialVersionUID = -4362847457298976145L;
     private ConnectionProperty connectionProperty;
 
     private JavaClientProperty javaClientProperty;
@@ -16,6 +21,10 @@ public class Properties {
     private TableProperty tableProperty;
 
     private XstudioProperty xstudioProperty;
+
+    private PluginProperty pluginProperty;
+
+    private DefaultShellCallback callback = new DefaultShellCallback(true);
 
     public ConnectionProperty getConnectionProperty() {
         return connectionProperty;
@@ -63,5 +72,21 @@ public class Properties {
 
     public void setXstudioProperty(XstudioProperty xstudioProperty) {
         this.xstudioProperty = xstudioProperty;
+    }
+
+    public DefaultShellCallback getCallback() {
+        return callback;
+    }
+
+    public void setCallback(DefaultShellCallback callback) {
+        this.callback = callback;
+    }
+
+    public PluginProperty getPluginProperty() {
+        return pluginProperty;
+    }
+
+    public void setPluginProperty(PluginProperty pluginProperty) {
+        this.pluginProperty = pluginProperty;
     }
 }

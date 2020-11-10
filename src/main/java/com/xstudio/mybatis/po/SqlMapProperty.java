@@ -1,10 +1,13 @@
 package com.xstudio.mybatis.po;
 
+import java.io.Serializable;
+
 /**
  * @author xiaobiao
  * @version 2020/10/2
  */
-public class SqlMapProperty {
+public class SqlMapProperty implements Serializable {
+    private static final long serialVersionUID = 1736192715397899436L;
     /**
      * This is the package where the generated classes will be placed. In the default generator, the property
      * "enableSubPackages" controls how the actual package is calculated. If true, then the calculated package will be the

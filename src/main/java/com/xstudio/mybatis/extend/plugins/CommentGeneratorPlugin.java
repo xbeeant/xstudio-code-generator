@@ -36,11 +36,10 @@ public class CommentGeneratorPlugin extends DefaultCommentGenerator {
         } else {
             field.addJavaDocLine(" *");
 
-            StringBuilder sb = new StringBuilder(" * ");
-            sb.append(introspectedTable.getFullyQualifiedTable());
-            sb.append('.');
-            sb.append(introspectedColumn.getActualColumnName());
-            field.addJavaDocLine(sb.toString());
+            String sb = " * " + introspectedTable.getFullyQualifiedTable() +
+                    '.' +
+                    introspectedColumn.getActualColumnName();
+            field.addJavaDocLine(sb);
         }
         field.addJavaDocLine(" */");
     }
@@ -152,9 +151,7 @@ public class CommentGeneratorPlugin extends DefaultCommentGenerator {
                 topLevelClass.addJavaDocLine(" * " + remarkLine);
             }
         } else {
-            StringBuilder sb = new StringBuilder(" * ");
-            sb.append(introspectedTable.getFullyQualifiedTable());
-            topLevelClass.addJavaDocLine(sb.toString());
+            topLevelClass.addJavaDocLine(" * " + introspectedTable.getFullyQualifiedTable());
         }
 
 

@@ -1,10 +1,14 @@
 package com.xstudio.mybatis.po;
 
+import java.io.Serializable;
+
 /**
  * @author xiaobiao
  * @version 2020/10/2
  */
-public class ConnectionProperty {
+public class ConnectionProperty implements Serializable {
+
+    private static final long serialVersionUID = 2737258169189898218L;
     /**
      * The JDBC connection URL used to access the database.
      */

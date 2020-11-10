@@ -1,10 +1,13 @@
 package com.xstudio.mybatis.po;
 
+import java.io.Serializable;
+
 /**
  * @author xiaobiao
  * @version 2020/10/2
  */
-public class JavaModelProperty {
+public class JavaModelProperty implements Serializable {
+    private static final long serialVersionUID = -1034316781579844484L;
     /**
      * This is the package where the generated classes will be placed. In the default generator, the property
      * "enableSubPackages" controls how the actual package is calculated. If true, then the calculated package will be the
