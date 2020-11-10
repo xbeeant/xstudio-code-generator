@@ -9,6 +9,7 @@ import org.mybatis.generator.api.dom.xml.*;
 import org.mybatis.generator.internal.util.JavaBeansUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -19,6 +20,7 @@ import java.util.List;
 public class XstudioMapperPlugin extends PluginAdapter {
     private final List<String> digit = new ArrayList<>();
     private final List<String> time = new ArrayList<>();
+    private final List<String> nonFuzzySearchColumn = new ArrayList<>();
     private boolean generated = false;
     private XmlElement updateByPrimaryKeySelectiveElement;
 
@@ -325,25 +327,6 @@ public class XstudioMapperPlugin extends PluginAdapter {
     public boolean sqlMapSelectByPrimaryKeyElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
         replaceKeyParam(element, introspectedTable);
         return super.sqlMapSelectByPrimaryKeyElementGenerated(element, introspectedTable);
-    }
-
-    private void replaceKeyParam(XmlElement element, IntrospectedTable introspectedTable) {
-        List<IntrospectedColumn> primaryKeyColumns = introspectedTable.getPrimaryKeyColumns();
-        if (primaryKeyColumns.size() == 1) {
-            List<VisitableElement> elements = element.getElements();
-            // get where text element
-            VisitableElement visitableElement = elements.get(elements.size() - 1);
-            String whereContent = ((TextElement) visitableElement).getContent();
-            int start = whereContent.indexOf("#{");
-            int end = whereContent.indexOf(",");
-            // replace with `key`
-            elements.remove(visitableElement);
-
-            String sb = whereContent.substring(0, start + 2) +
-                    "key" +
-                    whereContent.substring(end);
-            elements.add(new TextElement(sb));
-        }
     }
 
     @Override
@@ -657,6 +640,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
         remarks = remarks.replaceAll(" ", "");
         if (digit.contains(column.getJdbcTypeName().toUpperCase())
                 || time.contains(column.getJdbcTypeName().toUpperCase())
+                || nonFuzzySearchColumn.contains(columName)
                 || isKeyColumn(column, introspectedTable)
                 || remarks.contains("fuzzy:false")
                 || column.isBLOBColumn()
@@ -683,6 +667,25 @@ public class XstudioMapperPlugin extends PluginAdapter {
         return false;
     }
 
+    private void replaceKeyParam(XmlElement element, IntrospectedTable introspectedTable) {
+        List<IntrospectedColumn> primaryKeyColumns = introspectedTable.getPrimaryKeyColumns();
+        if (primaryKeyColumns.size() == 1) {
+            List<VisitableElement> elements = element.getElements();
+            // get where text element
+            VisitableElement visitableElement = elements.get(elements.size() - 1);
+            String whereContent = ((TextElement) visitableElement).getContent();
+            int start = whereContent.indexOf("#{");
+            int end = whereContent.indexOf(",");
+            // replace with `key`
+            elements.remove(visitableElement);
+
+            String sb = whereContent.substring(0, start + 2) +
+                    "key" +
+                    whereContent.substring(end);
+            elements.add(new TextElement(sb));
+        }
+    }
+
     private void replaceWithWhereExampleElement(XmlElement element) {
         List<VisitableElement> elements = element.getElements();
         VisitableElement visitableElement = elements.get(elements.size() - 1);
@@ -698,6 +701,13 @@ public class XstudioMapperPlugin extends PluginAdapter {
 
     @Override
     public boolean validate(List<String> warnings) {
+        String nonFuzzySearchColumnStr = properties.getProperty("nonFuzzySearchColumn");
+        if (null != nonFuzzySearchColumnStr) {
+            String[] split = nonFuzzySearchColumnStr.split(",");
+            if (split.length > 0) {
+                nonFuzzySearchColumn.addAll(Arrays.asList(split));
+            }
+        }
         return true;
     }
 }

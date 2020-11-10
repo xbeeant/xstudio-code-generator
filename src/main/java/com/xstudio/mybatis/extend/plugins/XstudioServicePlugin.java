@@ -195,7 +195,7 @@ public class XstudioServicePlugin extends PluginAdapter {
                 String key = JavaBeansUtil.getCamelCaseString(keyColumn.getActualColumnName(), true);
                 if ("String".equals(keyColumn.getFullyQualifiedJavaType().getShortName())) {
                     StringBuilder sb = new StringBuilder();
-                    sb.append("if(record.get");
+                    sb.append("if (record.get");
                     sb.append(key);
                     sb.append("() == null || \"\".equals(record.get");
                     sb.append(key);
@@ -210,9 +210,9 @@ public class XstudioServicePlugin extends PluginAdapter {
                     setDefaults.addBodyLine("}");
                 } else if ("Long".equals(keyColumn.getFullyQualifiedJavaType().getShortName())) {
                     StringBuilder sb = new StringBuilder();
-                    sb.append("if(record.get");
+                    sb.append("if (record.get");
                     sb.append(key);
-                    sb.append("() == null ) {");
+                    sb.append("() == null) {");
                     setDefaults.addBodyLine(sb.toString());
                     sb = new StringBuilder();
                     sb.append("record.set");

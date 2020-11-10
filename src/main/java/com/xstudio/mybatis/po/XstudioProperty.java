@@ -22,6 +22,10 @@ public class XstudioProperty implements Serializable {
 
     private String responseObject;
 
+    private String nonFuzzySearchColumn = "create_by, update_by";
+
+    private String ignoreColumns = "";
+
     public String getServiceRootInterface() {
         return serviceRootInterface;
     }
@@ -76,5 +80,21 @@ public class XstudioProperty implements Serializable {
 
     public void setResponseObject(String responseObject) {
         this.responseObject = responseObject;
+    }
+
+    public String getNonFuzzySearchColumn() {
+        return nonFuzzySearchColumn;
+    }
+
+    public void setNonFuzzySearchColumn(String nonFuzzySearchColumn) {
+        this.nonFuzzySearchColumn = nonFuzzySearchColumn;
+    }
+
+    public String getIgnoreColumns() {
+        return ignoreColumns;
+    }
+
+    public void setIgnoreColumns(String ignoreColumns) {
+        this.ignoreColumns = ignoreColumns;
     }
 }

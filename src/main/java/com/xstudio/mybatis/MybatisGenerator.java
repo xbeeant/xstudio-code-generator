@@ -71,8 +71,6 @@ public class MybatisGenerator {
 
         config.addContext(context);
 
-
-
         MyBatisGenerator myBatisGenerator = new MyBatisGenerator(config, properties.getCallback(), warnings);
         myBatisGenerator.generate(null);
 
@@ -376,6 +374,7 @@ public class MybatisGenerator {
         if (properties.getPluginProperty().isEnableXstudioMapperPlugin()) {
             pluginConfiguration = new PluginConfiguration();
             pluginConfiguration.setConfigurationType("com.xstudio.mybatis.extend.plugins.XstudioMapperPlugin");
+            pluginConfiguration.addProperty("nonFuzzySearchColumn", properties.getXstudioProperty().getNonFuzzySearchColumn());
             context.addPluginConfiguration(pluginConfiguration);
         }
 
