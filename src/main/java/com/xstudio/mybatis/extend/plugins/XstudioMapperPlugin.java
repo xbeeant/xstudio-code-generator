@@ -248,6 +248,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
 
     @Override
     public boolean sqlMapDocumentGenerated(Document document, IntrospectedTable introspectedTable) {
+        boolean b = super.sqlMapDocumentGenerated(document, introspectedTable);
         batchInsertSelective(document, introspectedTable);
         batchDeleteByPrimaryKey(document, introspectedTable);
         batchUpdateByPrimaryKeySelective(document, introspectedTable);
@@ -257,7 +258,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
         fuzzySearch(introspectedTable, document.getRootElement(), true);
         fuzzySearchMap(introspectedTable, document.getRootElement(), true);
 
-        return super.sqlMapDocumentGenerated(document, introspectedTable);
+        return b;
     }
 
     @Override
@@ -703,7 +704,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
     public boolean validate(List<String> warnings) {
         String nonFuzzySearchColumnStr = properties.getProperty("nonFuzzySearchColumn");
         if (null != nonFuzzySearchColumnStr) {
-            String[] split = nonFuzzySearchColumnStr.split(",");
+            String[] split = nonFuzzySearchColumnStr.replaceAll(" ","").split(",");
             if (split.length > 0) {
                 nonFuzzySearchColumn.addAll(Arrays.asList(split));
             }

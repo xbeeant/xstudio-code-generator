@@ -134,6 +134,7 @@ public class MybatisGenerator {
         configuration.setDriverClass(property.getDriverClass());
         configuration.setPassword(property.getPassword());
         configuration.setUserId(property.getUser());
+        configuration.addProperty("nullCatalogMeansCurrent","true");
         return configuration;
     }
 
@@ -189,7 +190,6 @@ public class MybatisGenerator {
         SqlMapGeneratorConfiguration configuration = new SqlMapGeneratorConfiguration();
         configuration.setTargetPackage(property.getTargetPackage());
         configuration.setTargetProject(property.getTargetProject());
-
         return configuration;
     }
 
@@ -289,6 +289,7 @@ public class MybatisGenerator {
         if (property.isUseActualColumnNames()) {
             configuration.addProperty("useActualColumnNames", "true");
         }
+        configuration.setAllColumnDelimitingEnabled(true);
         configuration.setSelectByPrimaryKeyQueryId(property.getSelectByPrimaryKeyQueryId());
 
         return configuration;
