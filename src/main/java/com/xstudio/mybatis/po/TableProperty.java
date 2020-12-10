@@ -2,6 +2,7 @@ package com.xstudio.mybatis.po;
 
 import org.mybatis.generator.config.DomainObjectRenamingRule;
 import org.mybatis.generator.config.IgnoredColumn;
+import org.mybatis.generator.config.ModelType;
 
 import java.io.Serializable;
 import java.util.List;
@@ -83,7 +84,7 @@ public class TableProperty implements Serializable {
      * any BLOB columns in the table, and another class that holds the remaining fields. There is an appropriate inheritance
      * relationship between the classes.
      */
-    private Boolean modelType;
+    private ModelType modelType;
 
     private String sqlProviderName;
 
@@ -213,11 +214,11 @@ public class TableProperty implements Serializable {
         this.selectByExampleQueryId = selectByExampleQueryId;
     }
 
-    public Boolean getModelType() {
+    public ModelType getModelType() {
         return modelType;
     }
 
-    public void setModelType(Boolean modelType) {
+    public void setModelType(ModelType modelType) {
         this.modelType = modelType;
     }
 

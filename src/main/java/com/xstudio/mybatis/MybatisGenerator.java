@@ -289,6 +289,7 @@ public class MybatisGenerator {
         if (property.isUseActualColumnNames()) {
             configuration.addProperty("useActualColumnNames", "true");
         }
+        configuration.setConfiguredModelType(property.getModelType().name());
         configuration.setAllColumnDelimitingEnabled(true);
         configuration.setSelectByPrimaryKeyQueryId(property.getSelectByPrimaryKeyQueryId());
 
