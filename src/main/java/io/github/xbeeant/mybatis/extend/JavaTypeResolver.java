@@ -1,4 +1,4 @@
-package com.xstudio.mybatis.extend;
+package io.github.xbeeant.mybatis.extend;
 
 import org.mybatis.generator.api.dom.java.FullyQualifiedJavaType;
 import org.mybatis.generator.internal.types.JavaTypeResolverDefaultImpl;

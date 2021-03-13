@@ -1,4 +1,4 @@
-package com.xstudio.mybatis.po;
+package io.github.xbeeant.mybatis.po;
 
 import java.io.Serializable;
 

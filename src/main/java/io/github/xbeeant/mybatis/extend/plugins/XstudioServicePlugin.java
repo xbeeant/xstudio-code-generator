@@ -1,6 +1,6 @@
-package com.xstudio.mybatis.extend.plugins;
+package io.github.xbeeant.mybatis.extend.plugins;
 
-import com.xstudio.mybatis.extend.PluginUtil;
+import io.github.xbeeant.mybatis.extend.PluginUtil;
 import org.mybatis.generator.api.GeneratedJavaFile;
 import org.mybatis.generator.api.IntrospectedColumn;
 import org.mybatis.generator.api.IntrospectedTable;

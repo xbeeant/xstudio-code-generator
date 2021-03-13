@@ -1,4 +1,4 @@
-package com.xstudio.mybatis.extend.plugins;
+package io.github.xbeeant.mybatis.extend.plugins;
 
 import org.mybatis.generator.api.IntrospectedColumn;
 import org.mybatis.generator.api.IntrospectedTable;
@@ -7,20 +7,12 @@ import org.mybatis.generator.internal.DefaultCommentGenerator;
 import org.mybatis.generator.internal.util.StringUtility;
 
 import java.util.Date;
-import java.util.Properties;
 
 /**
  * @author xiaobiao
  * @version 2020/10/3
  */
 public class CommentGeneratorPlugin extends DefaultCommentGenerator {
-    public CommentGeneratorPlugin() {
-    }
-
-    @Override
-    public void addConfigurationProperties(Properties properties) {
-
-    }
 
     @Override
     public void addFieldComment(Field field, IntrospectedTable introspectedTable, IntrospectedColumn introspectedColumn) {

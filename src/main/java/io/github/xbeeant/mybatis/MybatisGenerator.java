@@ -1,6 +1,6 @@
-package com.xstudio.mybatis;
+package io.github.xbeeant.mybatis;
 
-import com.xstudio.mybatis.po.*;
+import io.github.xbeeant.mybatis.po.*;
 import org.mybatis.generator.api.IntrospectedTable;
 import org.mybatis.generator.api.MyBatisGenerator;
 import org.mybatis.generator.config.*;
@@ -19,7 +19,7 @@ import java.util.List;
  * @version 2020/10/2
  */
 public class MybatisGenerator {
-
+    private static final String FALSE = "false";
     /**
      * 生成
      *
@@ -32,7 +32,7 @@ public class MybatisGenerator {
      */
     public MyBatisGenerator generate(Properties properties) throws InterruptedException, SQLException, IOException, InvalidConfigurationException {
         List<String> warnings = new ArrayList<>();
-        boolean overwrite = true;
+
         Configuration config = new Configuration();
         // context configuration
         Context context = new Context(ModelType.CONDITIONAL);
@@ -97,7 +97,7 @@ public class MybatisGenerator {
         //
         // If you disable all comments, you might find the UnmergeableXmlMappersPlugin useful. It will cause the generator
         // to respect the overwrite flag for XML files.
-        configuration.addProperty("suppressAllComments", "false");
+        configuration.addProperty("suppressAllComments", FALSE);
         // This property is used to specify whether MBG will include the generation timestamp in the generated comments.
         // The property supports these values:
         //
@@ -106,7 +106,7 @@ public class MybatisGenerator {
         // was generated.
         //
         // true: When the property is true, no timestamp will be added to the generated comments.
-        configuration.addProperty("suppressDate", "false");
+        configuration.addProperty("suppressDate", FALSE);
 
         // This property is used to specify whether MBG will include table and column remarks from db table in the generated
         // comments. The property supports these values:
@@ -174,7 +174,7 @@ public class MybatisGenerator {
         // JDBC Type: Resolved Java Type
         // TIME_WITH_TIMEZONE: java.time.OffsetTime
         // TIMESTAMP_WITH_TIMEZONE: java.time.OffsetDateTime
-        configuration.addProperty("useJSR310Types", "false");
+        configuration.addProperty("useJSR310Types", FALSE);
 
         configuration.setConfigurationType("com.xstudio.mybatis.extend.JavaTypeResolver");
         return configuration;

@@ -1,4 +1,4 @@
-package com.xstudio.mybatis.po;
+package io.github.xbeeant.mybatis.po;
 
 import java.io.Serializable;
 
@@ -6,8 +6,8 @@ import java.io.Serializable;
  * @author xiaobiao
  * @version 2020/10/2
  */
-public class SqlMapProperty implements Serializable {
-    private static final long serialVersionUID = 1736192715397899436L;
+public class JavaClientProperty implements Serializable {
+    private static final long serialVersionUID = -681368979067143782L;
     /**
      * This is the package where the generated classes will be placed. In the default generator, the property
      * "enableSubPackages" controls how the actual package is calculated. If true, then the calculated package will be the
@@ -24,6 +24,9 @@ public class SqlMapProperty implements Serializable {
      */
     private String targetProject;
 
+    private String type = "XMLMAPPER";
+
+    private String rootInterface;
 
     public String getTargetPackage() {
         return targetPackage;
@@ -39,5 +42,21 @@ public class SqlMapProperty implements Serializable {
 
     public void setTargetProject(String targetProject) {
         this.targetProject = targetProject;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getRootInterface() {
+        return rootInterface;
+    }
+
+    public void setRootInterface(String rootInterface) {
+        this.rootInterface = rootInterface;
     }
 }

@@ -1,4 +1,4 @@
-package com.xstudio.mybatis.extend.plugins;
+package io.github.xbeeant.mybatis.extend.plugins;
 
 import org.mybatis.generator.api.IntrospectedTable;
 import org.mybatis.generator.api.PluginAdapter;
