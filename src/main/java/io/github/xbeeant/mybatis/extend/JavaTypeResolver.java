@@ -15,5 +15,7 @@ public class JavaTypeResolver extends JavaTypeResolverDefaultImpl {
                 new FullyQualifiedJavaType(Integer.class.getName())));
         typeMap.put(Types.TINYINT, new JdbcTypeInformation("TINYINT",
                 new FullyQualifiedJavaType(Integer.class.getName())));
+        typeMap.put(Types.BIT, new JdbcTypeInformation("BIT",
+                new FullyQualifiedJavaType(Boolean.class.getName())));
     }
 }
