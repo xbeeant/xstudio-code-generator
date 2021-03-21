@@ -25,6 +25,9 @@ public class XstudioProperty implements Serializable {
     private String nonFuzzySearchColumn = "create_by, update_by";
 
     private String ignoreColumns = "";
+    private String beginEnd = "";
+
+    private String dateTime = "";
 
     public String getServiceRootInterface() {
         return serviceRootInterface;
@@ -96,5 +99,21 @@ public class XstudioProperty implements Serializable {
 
     public void setIgnoreColumns(String ignoreColumns) {
         this.ignoreColumns = ignoreColumns;
+    }
+
+    public String getBeginEnd() {
+        return beginEnd;
+    }
+
+    public void setBeginEnd(String beginEnd) {
+        this.beginEnd = beginEnd;
+    }
+
+    public String getDateTime() {
+        return dateTime;
+    }
+
+    public void setDateTime(String dateTime) {
+        this.dateTime = dateTime;
     }
 }

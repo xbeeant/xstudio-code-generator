@@ -84,7 +84,7 @@ public class MybatisGenerator {
      */
     private CommentGeneratorConfiguration commentGeneratorConfiguration() {
         CommentGeneratorConfiguration configuration = new CommentGeneratorConfiguration();
-        configuration.setConfigurationType("com.xstudio.mybatis.extend.plugins.CommentGeneratorPlugin");
+        configuration.setConfigurationType("io.github.xbeeant.mybatis.extend.plugins.CommentGeneratorPlugin");
 
         // This property is used to specify whether MBG will include any comments in the generated code
         //
@@ -176,7 +176,7 @@ public class MybatisGenerator {
         // TIMESTAMP_WITH_TIMEZONE: java.time.OffsetDateTime
         configuration.addProperty("useJSR310Types", FALSE);
 
-        configuration.setConfigurationType("com.xstudio.mybatis.extend.JavaTypeResolver");
+        configuration.setConfigurationType("io.github.xbeeant.mybatis.extend.JavaTypeResolver");
         return configuration;
     }
 
@@ -357,38 +357,40 @@ public class MybatisGenerator {
         // ==============================
         if (properties.getPluginProperty().isEnableJavaClientRootInterfaceKeyTypeArgumentPlugin()) {
             pluginConfiguration = new PluginConfiguration();
-            pluginConfiguration.setConfigurationType("com.xstudio.mybatis.extend.plugins.JavaClientRootInterfaceKeyTypeArgumentPlugin");
+            pluginConfiguration.setConfigurationType("io.github.xbeeant.mybatis.extend.plugins.JavaClientRootInterfaceKeyTypeArgumentPlugin");
             context.addPluginConfiguration(pluginConfiguration);
         }
 
         if (properties.getPluginProperty().isEnableJavaModelRootClassKeyTypeArgumentPlugin()) {
             pluginConfiguration = new PluginConfiguration();
-            pluginConfiguration.setConfigurationType("com.xstudio.mybatis.extend.plugins.JavaModelRootClassKeyTypeArgumentPlugin");
+            pluginConfiguration.setConfigurationType("io.github.xbeeant.mybatis.extend.plugins.JavaModelRootClassKeyTypeArgumentPlugin");
             context.addPluginConfiguration(pluginConfiguration);
         }
 
         if (properties.getPluginProperty().isEnableJavaModelNoExamplePlugin()) {
             pluginConfiguration = new PluginConfiguration();
-            pluginConfiguration.setConfigurationType("com.xstudio.mybatis.extend.plugins.JavaModelNoExamplePlugin");
+            pluginConfiguration.setConfigurationType("io.github.xbeeant.mybatis.extend.plugins.JavaModelNoExamplePlugin");
             context.addPluginConfiguration(pluginConfiguration);
         }
 
         if (properties.getPluginProperty().isEnableXstudioMapperPlugin()) {
             pluginConfiguration = new PluginConfiguration();
-            pluginConfiguration.setConfigurationType("com.xstudio.mybatis.extend.plugins.XstudioMapperPlugin");
+            pluginConfiguration.setConfigurationType("io.github.xbeeant.mybatis.extend.plugins.XstudioMapperPlugin");
             pluginConfiguration.addProperty("nonFuzzySearchColumn", properties.getXstudioProperty().getNonFuzzySearchColumn());
+            pluginConfiguration.addProperty("usingBeginEnd", properties.getXstudioProperty().getBeginEnd());
+            pluginConfiguration.addProperty("usingDateTime", properties.getXstudioProperty().getDateTime());
             context.addPluginConfiguration(pluginConfiguration);
         }
 
         if (properties.getPluginProperty().isEnableXstudioModelPlugin()) {
             pluginConfiguration = new PluginConfiguration();
-            pluginConfiguration.setConfigurationType("com.xstudio.mybatis.extend.plugins.XstudioModelPlugin");
+            pluginConfiguration.setConfigurationType("io.github.xbeeant.mybatis.extend.plugins.XstudioModelPlugin");
             context.addPluginConfiguration(pluginConfiguration);
         }
 
         if (properties.getPluginProperty().isEnableXstudioServicePlugin()) {
             pluginConfiguration = new PluginConfiguration();
-            pluginConfiguration.setConfigurationType("com.xstudio.mybatis.extend.plugins.XstudioServicePlugin");
+            pluginConfiguration.setConfigurationType("io.github.xbeeant.mybatis.extend.plugins.XstudioServicePlugin");
             pluginConfiguration.addProperty("serviceRootInterface", properties.getXstudioProperty().getServiceRootInterface());
             pluginConfiguration.addProperty("serviceTargetPackage", properties.getXstudioProperty().getServiceTargetPackage());
             pluginConfiguration.addProperty("serviceImplementRootInterface", properties.getXstudioProperty().getServiceImplementRootInterface());

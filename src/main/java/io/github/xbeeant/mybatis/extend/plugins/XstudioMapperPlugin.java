@@ -8,10 +8,7 @@ import org.mybatis.generator.api.dom.java.*;
 import org.mybatis.generator.api.dom.xml.*;
 import org.mybatis.generator.internal.util.JavaBeansUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author xiaobiao
@@ -21,6 +18,8 @@ public class XstudioMapperPlugin extends PluginAdapter {
     private final List<String> digit = new ArrayList<>();
     private final List<String> time = new ArrayList<>();
     private final List<String> nonFuzzySearchColumn = new ArrayList<>();
+    private Boolean usingBeginEnd = false;
+    private Boolean usingDateTime = false;
     private boolean generated = false;
     private XmlElement updateByPrimaryKeySelectiveElement;
 
@@ -180,6 +179,48 @@ public class XstudioMapperPlugin extends PluginAdapter {
     }
 
     @Override
+    public boolean sqlMapResultMapWithoutBLOBsElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
+        Map<String, IntrospectedColumn> introspectedColumns = PluginUtil.typeHandlersColumns(introspectedTable);
+        if (!introspectedColumns.isEmpty()) {
+            for (VisitableElement elementElement : element.getElements()) {
+                if (elementElement instanceof XmlElement) {
+                    XmlElement xmlElement = (XmlElement) elementElement;
+                    List<Attribute> attributes = xmlElement.getAttributes();
+                    for (Attribute attribute : attributes) {
+                        IntrospectedColumn column = introspectedColumns.get(attribute.getValue());
+                        if (null != column) {
+                            xmlElement.addAttribute(new Attribute("typeHandler", PluginUtil.typeHandler(column)));
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return super.sqlMapResultMapWithoutBLOBsElementGenerated(element, introspectedTable);
+    }
+
+    @Override
+    public boolean sqlMapResultMapWithBLOBsElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
+        Map<String, IntrospectedColumn> introspectedColumns = PluginUtil.typeHandlersColumns(introspectedTable);
+        if (!introspectedColumns.isEmpty()) {
+            for (VisitableElement elementElement : element.getElements()) {
+                if (elementElement instanceof XmlElement) {
+                    XmlElement xmlElement = (XmlElement) elementElement;
+                    List<Attribute> attributes = xmlElement.getAttributes();
+                    for (Attribute attribute : attributes) {
+                        IntrospectedColumn column = introspectedColumns.get(attribute.getValue());
+                        if (null != column) {
+                            xmlElement.addAttribute(new Attribute("typeHandler", PluginUtil.typeHandler(column)));
+                        }
+                    }
+
+                }
+            }
+        }
+        return super.sqlMapResultMapWithBLOBsElementGenerated(element, introspectedTable);
+    }
+
+    @Override
     public boolean modelFieldGenerated(Field field, TopLevelClass topLevelClass, IntrospectedColumn introspectedColumn, IntrospectedTable introspectedTable, ModelClassType modelClassType) {
         if (!topLevelClass.getSuperClass().isPresent() && !generated) {
             List<IntrospectedColumn> primaryKeyColumns = introspectedTable.getPrimaryKeyColumns();
@@ -272,7 +313,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
             element.addAttribute(new Attribute("id", "Prefixed_Example_Where_Clause"));
         }
         for (IntrospectedColumn column : introspectedTable.getAllColumns()) {
-            PluginUtil.addIfElement(element, column, prefix);
+            PluginUtil.addIfElement(element, column, prefix, usingBeginEnd, usingDateTime);
         }
         return super.sqlMapExampleWhereClauseElementGenerated(element, introspectedTable);
     }
@@ -560,39 +601,108 @@ public class XstudioMapperPlugin extends PluginAdapter {
         rootXmlElement.addAttribute(attribute);
 
         for (IntrospectedColumn column : introspectedTable.getAllColumns()) {
-            ifElement = new XmlElement("if");
-            String testClause = getTestClause(column, pager);
-            ifElement.addAttribute(new Attribute("test", testClause));
-            String sqlClause = getSqlClause(column, pager, introspectedTable);
-            ifElement.addElement(new TextElement(sqlClause));
-            rootXmlElement.addElement(ifElement);
-
-            if ("TIMESTAMP".equals(column.getJdbcTypeName())) {
-                // ***Begin
+            if (time.contains(column.getJdbcTypeName())) {
+                if (usingBeginEnd) {
+                    useBeginEnd(introspectedTable, pager, rootXmlElement, column);
+                } else if (usingDateTime) {
+                    useDateTime(introspectedTable, pager, rootXmlElement, column);
+                } else {
+                    ifElement = new XmlElement("if");
+                    String testClause = getTestClause(column, pager);
+                    ifElement.addAttribute(new Attribute("test", testClause));
+                    String sqlClause = getSqlClause(column, pager, introspectedTable);
+                    ifElement.addElement(new TextElement(sqlClause));
+                    rootXmlElement.addElement(ifElement);
+                }
+            } else {
                 ifElement = new XmlElement("if");
-                testClause = getTestClause(column, pager);
-                testClause = testClause.replaceAll(column.getJavaProperty(), column.getJavaProperty() + "Begin");
+                String testClause = getTestClause(column, pager);
                 ifElement.addAttribute(new Attribute("test", testClause));
-                sqlClause = getSqlClause(column, pager, introspectedTable);
-                sqlClause = sqlClause.replaceAll(column.getJavaProperty(), column.getJavaProperty() + "Begin");
-                sqlClause = sqlClause.replaceAll(" = #", " &gt;= #");
-                ifElement.addElement(new TextElement(sqlClause));
-                rootXmlElement.addElement(ifElement);
-
-                // ***End
-                ifElement = new XmlElement("if");
-                testClause = getTestClause(column, pager);
-                testClause = testClause.replaceAll(column.getJavaProperty(), column.getJavaProperty() + "End");
-                ifElement.addAttribute(new Attribute("test", testClause));
-                sqlClause = getSqlClause(column, pager, introspectedTable);
-                sqlClause = sqlClause.replaceAll(column.getJavaProperty(), column.getJavaProperty() + "End");
-                sqlClause = sqlClause.replaceAll(" = #", " &lt;= #");
+                String sqlClause = getSqlClause(column, pager, introspectedTable);
                 ifElement.addElement(new TextElement(sqlClause));
                 rootXmlElement.addElement(ifElement);
             }
         }
 
         mapper.addElement(rootXmlElement);
+    }
+
+    private void useBeginEnd(IntrospectedTable introspectedTable, boolean pager, XmlElement rootXmlElement, IntrospectedColumn column) {
+        XmlElement ifElement = new XmlElement("if");
+        String testClause = getTestClause(column, pager);
+        ifElement.addAttribute(new Attribute("test", testClause));
+        String sqlClause = getSqlClause(column, pager, introspectedTable);
+        ifElement.addElement(new TextElement(sqlClause));
+        rootXmlElement.addElement(ifElement);
+
+        // ***Begin
+        ifElement = new XmlElement("if");
+        testClause = getTestClause(column, pager);
+        testClause = testClause.replaceAll(column.getJavaProperty(), column.getJavaProperty() + "Begin");
+        ifElement.addAttribute(new Attribute("test", testClause));
+        sqlClause = getSqlClause(column, pager, introspectedTable);
+        sqlClause = sqlClause.replaceAll(column.getJavaProperty(), column.getJavaProperty() + "Begin");
+        sqlClause = sqlClause.replaceAll(" = #", " &gt;= #");
+        ifElement.addElement(new TextElement(sqlClause));
+        rootXmlElement.addElement(ifElement);
+
+        // ***End
+        ifElement = new XmlElement("if");
+        testClause = getTestClause(column, pager);
+        testClause = testClause.replaceAll(column.getJavaProperty(), column.getJavaProperty() + "End");
+        ifElement.addAttribute(new Attribute("test", testClause));
+        sqlClause = getSqlClause(column, pager, introspectedTable);
+        sqlClause = sqlClause.replaceAll(column.getJavaProperty(), column.getJavaProperty() + "End");
+        sqlClause = sqlClause.replaceAll(" = #", " &lt;= #");
+        ifElement.addElement(new TextElement(sqlClause));
+        rootXmlElement.addElement(ifElement);
+    }
+
+    private void useDateTime(IntrospectedTable introspectedTable, boolean pager, XmlElement rootXmlElement, IntrospectedColumn column) {
+        XmlElement rootIfElement;
+        XmlElement ifElement;
+        rootIfElement = new XmlElement("if");
+
+        String testClause;
+        String name = column.getJavaProperty();
+        String prefix = "";
+        if (pager) {
+            prefix = "example.";
+        }
+
+        testClause = prefix + name + " != null";
+        rootIfElement.addAttribute(new Attribute("test", testClause));
+        rootXmlElement.addElement(rootIfElement);
+
+        // ***
+        ifElement = new XmlElement("if");
+        testClause = prefix + name + ".start == null and " + prefix + name + ".end == null";
+        ifElement.addAttribute(new Attribute("test", testClause));
+        String sqlClause = getSqlClause(column, pager, introspectedTable);
+        ifElement.addElement(new TextElement(sqlClause));
+        rootIfElement.addElement(ifElement);
+
+        // ***Begin
+        ifElement = new XmlElement("if");
+        testClause = getTestClause(column, pager);
+        testClause = testClause.replaceAll(column.getJavaProperty(), column.getJavaProperty() + ".start");
+        ifElement.addAttribute(new Attribute("test", testClause));
+        sqlClause = getSqlClause(column, pager, introspectedTable);
+        sqlClause = sqlClause.replaceAll(column.getJavaProperty(), column.getJavaProperty() + ".start");
+        sqlClause = sqlClause.replaceAll(" = #", " &gt;= #");
+        ifElement.addElement(new TextElement(sqlClause));
+        rootIfElement.addElement(ifElement);
+
+        // ***End
+        ifElement = new XmlElement("if");
+        testClause = getTestClause(column, pager);
+        testClause = testClause.replaceAll(column.getJavaProperty(), column.getJavaProperty() + ".end");
+        ifElement.addAttribute(new Attribute("test", testClause));
+        sqlClause = getSqlClause(column, pager, introspectedTable);
+        sqlClause = sqlClause.replaceAll(column.getJavaProperty(), column.getJavaProperty() + ".end");
+        sqlClause = sqlClause.replaceAll(" = #", " &lt;= #");
+        ifElement.addElement(new TextElement(sqlClause));
+        rootIfElement.addElement(ifElement);
     }
 
     private void fromCondition(IntrospectedTable introspectedTable, XmlElement rootXmlElement) {
@@ -703,6 +813,8 @@ public class XstudioMapperPlugin extends PluginAdapter {
     @Override
     public boolean validate(List<String> warnings) {
         String nonFuzzySearchColumnStr = properties.getProperty("nonFuzzySearchColumn");
+        usingBeginEnd = Boolean.valueOf(properties.getProperty("usingBeginEnd"));
+        usingDateTime = Boolean.valueOf(properties.getProperty("usingDateTime"));
         if (null != nonFuzzySearchColumnStr) {
             String[] split = nonFuzzySearchColumnStr.replaceAll(" ","").split(",");
             if (split.length > 0) {
