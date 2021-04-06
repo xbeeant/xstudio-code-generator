@@ -18,6 +18,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
     private final List<String> digit = new ArrayList<>();
     private final List<String> time = new ArrayList<>();
     private final List<String> nonFuzzySearchColumn = new ArrayList<>();
+    private final String parameterType = "parameterType";
     private Boolean usingBeginEnd = false;
     private Boolean usingDateTime = false;
     private boolean generated = false;
@@ -265,8 +266,8 @@ public class XstudioMapperPlugin extends PluginAdapter {
 
     @Override
     public boolean sqlMapCountByExampleElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
-        element.getAttributes().removeIf(attribute -> "parameterType".equals(attribute.getName()));
-        element.getAttributes().add(new Attribute("parameterType", introspectedTable.getBaseRecordType()));
+        element.getAttributes().removeIf(attribute -> parameterType.equals(attribute.getName()));
+        element.getAttributes().add(new Attribute(parameterType, introspectedTable.getBaseRecordType()));
 
         replaceWithWhereExampleElement(element);
         return super.sqlMapCountByExampleElementGenerated(element, introspectedTable);
@@ -274,8 +275,8 @@ public class XstudioMapperPlugin extends PluginAdapter {
 
     @Override
     public boolean sqlMapDeleteByExampleElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
-        element.getAttributes().removeIf(attribute -> "parameterType".equals(attribute.getName()));
-        element.getAttributes().add(new Attribute("parameterType", introspectedTable.getBaseRecordType()));
+        element.getAttributes().removeIf(attribute -> parameterType.equals(attribute.getName()));
+        element.getAttributes().add(new Attribute(parameterType, introspectedTable.getBaseRecordType()));
 
         replaceWithWhereExampleElement(element);
         return super.sqlMapDeleteByExampleElementGenerated(element, introspectedTable);
@@ -320,8 +321,8 @@ public class XstudioMapperPlugin extends PluginAdapter {
 
     @Override
     public boolean sqlMapSelectByExampleWithoutBLOBsElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
-        element.getAttributes().removeIf(attribute -> "parameterType".equals(attribute.getName()));
-        element.getAttributes().add(new Attribute("parameterType", introspectedTable.getBaseRecordType()));
+        element.getAttributes().removeIf(attribute -> parameterType.equals(attribute.getName()));
+        element.getAttributes().add(new Attribute(parameterType, introspectedTable.getBaseRecordType()));
 
         List<VisitableElement> elements = element.getElements();
         Iterator<VisitableElement> iterator = elements.iterator();
@@ -344,8 +345,8 @@ public class XstudioMapperPlugin extends PluginAdapter {
 
     @Override
     public boolean sqlMapSelectByExampleWithBLOBsElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
-        element.getAttributes().removeIf(attribute -> "parameterType".equals(attribute.getName()));
-        element.getAttributes().add(new Attribute("parameterType", introspectedTable.getBaseRecordType()));
+        element.getAttributes().removeIf(attribute -> parameterType.equals(attribute.getName()));
+        element.getAttributes().add(new Attribute(parameterType, introspectedTable.getBaseRecordType()));
 
         List<VisitableElement> elements = element.getElements();
         Iterator<VisitableElement> iterator = elements.iterator();
@@ -375,7 +376,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
     public boolean sqlMapUpdateByExampleSelectiveElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
         // remove
         // parameterType="map"
-        element.getAttributes().removeIf(attribute -> "parameterType".equals(attribute.getName()));
+        element.getAttributes().removeIf(attribute -> parameterType.equals(attribute.getName()));
 
         replaceWithWhereExampleElement(element);
         return super.sqlMapUpdateByExampleSelectiveElementGenerated(element, introspectedTable);
@@ -383,7 +384,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
 
     @Override
     public boolean sqlMapUpdateByExampleWithBLOBsElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
-        element.getAttributes().removeIf(attribute -> "parameterType".equals(attribute.getName()));
+        element.getAttributes().removeIf(attribute -> parameterType.equals(attribute.getName()));
 
         replaceWithWhereExampleElement(element);
         return super.sqlMapUpdateByExampleWithBLOBsElementGenerated(element, introspectedTable);
@@ -391,7 +392,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
 
     @Override
     public boolean sqlMapUpdateByExampleWithoutBLOBsElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
-        element.getAttributes().removeIf(attribute -> "parameterType".equals(attribute.getName()));
+        element.getAttributes().removeIf(attribute -> parameterType.equals(attribute.getName()));
 
         replaceWithWhereExampleElement(element);
         return super.sqlMapUpdateByExampleWithoutBLOBsElementGenerated(element, introspectedTable);
@@ -459,7 +460,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
     private void batchInsertSelective(Document document, IntrospectedTable introspectedTable) {
         XmlElement element = new XmlElement("insert");
         element.addAttribute(new Attribute("id", "batchInsertSelective"));
-        element.addAttribute(new Attribute("parameterType", "java.util.List"));
+        element.addAttribute(new Attribute(parameterType, "java.util.List"));
         XmlElement foreachElement = new XmlElement("foreach");
         foreachElement.addAttribute(new Attribute("collection", "list"));
         foreachElement.addAttribute(new Attribute("index", "index"));
@@ -487,12 +488,12 @@ public class XstudioMapperPlugin extends PluginAdapter {
     }
 
     private void batchDeleteByPrimaryKey(Document document, IntrospectedTable introspectedTable) {
-        if (introspectedTable.getPrimaryKeyColumns() == null) {
+        if (isNoPrimaryKey(introspectedTable)) {
             return;
         }
         XmlElement element = new XmlElement("delete");
         element.addAttribute(new Attribute("id", "batchDeleteByPrimaryKey"));
-        element.addAttribute(new Attribute("parameterType", "java.util.List"));
+        element.addAttribute(new Attribute(parameterType, "java.util.List"));
         XmlElement foreachElement = new XmlElement("foreach");
         foreachElement.addAttribute(new Attribute("collection", "list"));
         foreachElement.addAttribute(new Attribute("index", "index"));
@@ -500,7 +501,6 @@ public class XstudioMapperPlugin extends PluginAdapter {
         foreachElement.addAttribute(new Attribute("separator", ";"));
         context.getCommentGenerator().addComment(element);
 
-        List<IntrospectedColumn> columns = introspectedTable.getAllColumns();
         foreachElement.addElement(new TextElement("delete from " + introspectedTable.getFullyQualifiedTableNameAtRuntime()));
         XmlElement where = new XmlElement("where");
         String and = "";
@@ -514,13 +514,17 @@ public class XstudioMapperPlugin extends PluginAdapter {
         document.getRootElement().addElement(element);
     }
 
+    private boolean isNoPrimaryKey(IntrospectedTable introspectedTable) {
+        return null == introspectedTable.getPrimaryKeyColumns() || introspectedTable.getPrimaryKeyColumns().isEmpty();
+    }
+
     private void batchUpdateByPrimaryKeySelective(Document document, IntrospectedTable introspectedTable) {
-        if (introspectedTable.getPrimaryKeyColumns() == null) {
+        if (isNoPrimaryKey(introspectedTable)) {
             return;
         }
         XmlElement element = new XmlElement("update");
         element.addAttribute(new Attribute("id", "batchUpdateByPrimaryKeySelective"));
-        element.addAttribute(new Attribute("parameterType", "java.util.List"));
+        element.addAttribute(new Attribute(parameterType, "java.util.List"));
 
         XmlElement foreachElement = new XmlElement("foreach");
         foreachElement.addAttribute(new Attribute("collection", "list"));
