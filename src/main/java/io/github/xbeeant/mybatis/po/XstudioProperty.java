@@ -1,6 +1,8 @@
 package io.github.xbeeant.mybatis.po;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author xiaobiao
@@ -28,6 +30,16 @@ public class XstudioProperty implements Serializable {
     private String beginEnd = "";
 
     private String dateTime = "";
+
+    private List<ColumnProperty> columns = new ArrayList<>();
+
+    public List<ColumnProperty> getColumns() {
+        return columns;
+    }
+
+    public void setColumns(List<ColumnProperty> columns) {
+        this.columns = columns;
+    }
 
     public String getServiceRootInterface() {
         return serviceRootInterface;

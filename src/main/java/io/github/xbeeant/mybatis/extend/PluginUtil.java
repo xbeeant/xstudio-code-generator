@@ -1,11 +1,13 @@
 package io.github.xbeeant.mybatis.extend;
 
+import io.github.xbeeant.mybatis.po.IfElementProperty;
 import org.mybatis.generator.api.IntrospectedColumn;
 import org.mybatis.generator.api.IntrospectedTable;
 import org.mybatis.generator.api.dom.java.FullyQualifiedJavaType;
 import org.mybatis.generator.api.dom.xml.Attribute;
 import org.mybatis.generator.api.dom.xml.TextElement;
 import org.mybatis.generator.api.dom.xml.XmlElement;
+import org.mybatis.generator.codegen.mybatis3.MyBatis3FormattingUtilities;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,164 +22,138 @@ import java.util.regex.Pattern;
 public class PluginUtil {
     private static final Pattern HANDLER_PATTERN = Pattern.compile("#handler\\s*:\\s*([\\w\\W]*)#");
 
+    public static String columnValue(IntrospectedColumn column, String javaPropertyPrefix, String handler) {
+        column.setTypeHandler(handler);
+        return MyBatis3FormattingUtilities.getParameterClause(column, javaPropertyPrefix);
+    }
+
     /**
      * 添加If元素
      *
-     * @param whereElement  where元素
-     * @param column        列
-     * @param prefix        前缀
-     * @param usingBeginEnd 生成Begin End字段
-     * @param usingDateTime 使用DateTime替换Date
+     * @param xmlElement        where元素
+     * @param column            列
+     * @param ifElementProperty 配置
+     * @param handler           handler
      */
-    public static void addIfElement(XmlElement whereElement, IntrospectedColumn column, String prefix, Boolean usingBeginEnd, Boolean usingDateTime) {
+    public static void addIfElement(XmlElement xmlElement, IntrospectedColumn column, IfElementProperty ifElementProperty, String handler) {
         XmlElement rootIfElement = new XmlElement("if");
         StringBuilder sb = new StringBuilder();
-        if (null == prefix) {
-            prefix = "";
-        }
-        sb.append(prefix);
+        sb.append(ifElementProperty.getJavaPropertyPrefix());
         sb.append(column.getJavaProperty());
         sb.append(" != null");
         Attribute attribute = new Attribute("test", sb.toString());
         rootIfElement.addAttribute(attribute);
 
-
         if (column.getFullyQualifiedJavaType().equals(FullyQualifiedJavaType.getDateInstance())) {
-            if (usingDateTime) {
+            if (ifElementProperty.getUsingDateTime()) {
                 XmlElement ifElement = new XmlElement("if");
 
                 sb = new StringBuilder();
-                if (null == prefix) {
-                    prefix = "";
-                }
-                sb.append(prefix);
+                sb.append(ifElementProperty.getJavaPropertyPrefix());
                 sb.append(column.getJavaProperty());
                 sb.append(".start == null and ");
-                sb.append(prefix);
+                sb.append(ifElementProperty.getJavaPropertyPrefix());
                 sb.append(column.getJavaProperty());
                 sb.append(".end == null");
                 attribute = new Attribute("test", sb.toString());
                 ifElement.addAttribute(attribute);
 
-                sb = new StringBuilder("and ");
-                sb.append(column.getActualColumnName());
-                sb.append(" = #{");
-                sb.append(prefix);
-                sb.append(column.getJavaProperty());
-                sb.append(",jdbcType=");
-                sb.append(column.getJdbcTypeName());
-                sb.append("}");
+                sb = new StringBuilder();
+
+                ifElementCondition(sb, ifElementProperty, column, "=");
+
+                sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler));
+
                 ifElement.addElement(new TextElement(sb.toString()));
                 rootIfElement.addElement(ifElement);
 
                 // start
                 ifElement = new XmlElement("if");
                 sb = new StringBuilder();
-                if (null == prefix) {
-                    prefix = "";
-                }
-                sb.append(prefix);
+
+                sb.append(ifElementProperty.getJavaPropertyPrefix());
                 sb.append(column.getJavaProperty());
                 sb.append(".start != null");
                 attribute = new Attribute("test", sb.toString());
                 ifElement.addAttribute(attribute);
 
-                sb = new StringBuilder("and ");
-                sb.append(column.getActualColumnName());
-                sb.append(" &gt;= #{");
-                sb.append(prefix);
-                sb.append(column.getJavaProperty());
-                sb.append(",jdbcType=");
-                sb.append(column.getJdbcTypeName());
-                sb.append("}");
+                sb = new StringBuilder();
+                ifElementCondition(sb, ifElementProperty, column, "&gt;=");
+
+                sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler));
+
                 ifElement.addElement(new TextElement(sb.toString()));
                 rootIfElement.addElement(ifElement);
 
                 // end
                 ifElement = new XmlElement("if");
                 sb = new StringBuilder();
-                if (null == prefix) {
-                    prefix = "";
-                }
-                sb.append(prefix);
+                sb.append(ifElementProperty.getJavaPropertyPrefix());
                 sb.append(column.getJavaProperty());
                 sb.append(".end != null");
                 attribute = new Attribute("test", sb.toString());
                 ifElement.addAttribute(attribute);
 
-                sb = new StringBuilder("and ");
-                sb.append(column.getActualColumnName());
-                sb.append(" &lt;= #{");
-                sb.append(prefix);
-                sb.append(column.getJavaProperty());
-                sb.append(",jdbcType=");
-                sb.append(column.getJdbcTypeName());
-                sb.append("}");
+                sb = new StringBuilder();
+                ifElementCondition(sb, ifElementProperty, column, "&lt;=");
+                sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler));
                 ifElement.addElement(new TextElement(sb.toString()));
                 rootIfElement.addElement(ifElement);
             } else {
-                sb = new StringBuilder("and ");
-                sb.append(column.getActualColumnName());
-                sb.append(" = #{");
-                sb.append(prefix);
-                sb.append(column.getJavaProperty());
-                sb.append(",jdbcType=");
-                sb.append(column.getJdbcTypeName());
-                sb.append("}");
+                sb = new StringBuilder();
+                ifElementCondition(sb, ifElementProperty, column, "=");
+                sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler));
                 rootIfElement.addElement(new TextElement(sb.toString()));
-                if (usingBeginEnd) {
+                if (ifElementProperty.getUsingBeginEnd()) {
                     // **Begin
                     rootIfElement = new XmlElement("if");
-                    sb = new StringBuilder(prefix);
+                    sb = new StringBuilder(ifElementProperty.getJavaPropertyPrefix());
                     sb.append(column.getJavaProperty());
                     sb.append("Begin != null");
                     attribute = new Attribute("test", sb.toString());
 
-                    sb = new StringBuilder("and ");
-                    sb.append(column.getActualColumnName());
-                    sb.append(" &gt;= #{");
-                    sb.append(prefix);
-                    sb.append(column.getJavaProperty());
-                    sb.append("Begin,jdbcType=");
-                    sb.append(column.getJdbcTypeName());
-                    sb.append("}");
+
+                    sb = new StringBuilder();
+                    ifElementCondition(sb, ifElementProperty, column, "&gt;=");
+
+                    sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler));
                     rootIfElement.addElement(new TextElement(sb.toString()));
                     rootIfElement.addAttribute(attribute);
-                    whereElement.addElement(rootIfElement);
+                    xmlElement.addElement(rootIfElement);
 
                     // **End
                     rootIfElement = new XmlElement("if");
-                    sb = new StringBuilder(prefix);
+                    sb = new StringBuilder(ifElementProperty.getJavaPropertyPrefix());
                     sb.append(column.getJavaProperty());
                     sb.append("End != null");
                     attribute = new Attribute("test", sb.toString());
 
-                    sb = new StringBuilder("and ");
-                    sb.append(column.getActualColumnName());
-                    sb.append(" &lt;= #{");
-                    sb.append(prefix);
-                    sb.append(column.getJavaProperty());
-                    sb.append("End,jdbcType=");
-                    sb.append(column.getJdbcTypeName());
-                    sb.append("}");
+                    sb = new StringBuilder();
+                    ifElementCondition(sb, ifElementProperty, column, "&lt;=");
+                    sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler));
                     rootIfElement.addElement(new TextElement(sb.toString()));
                     rootIfElement.addAttribute(attribute);
-                    whereElement.addElement(rootIfElement);
+                    xmlElement.addElement(rootIfElement);
                 }
             }
         } else {
-            sb = new StringBuilder("and ");
-            sb.append(column.getActualColumnName());
-            sb.append(" = #{");
-            sb.append(prefix);
-            sb.append(column.getJavaProperty());
-            sb.append(",jdbcType=");
-            sb.append(column.getJdbcTypeName());
-            sb.append("}");
+            sb = new StringBuilder();
+            ifElementCondition(sb, ifElementProperty, column, "=");
+            sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler));
             rootIfElement.addElement(new TextElement(sb.toString()));
         }
 
-        whereElement.addElement(rootIfElement);
+        xmlElement.addElement(rootIfElement);
+    }
+
+    private static void ifElementCondition(StringBuilder sb, IfElementProperty ifElementProperty, IntrospectedColumn column, String condition) {
+        sb.append(ifElementProperty.getTextPrefix());
+        if (ifElementProperty.getColumn()) {
+            sb.append(ifElementProperty.getBeginningDelimiter());
+            sb.append(column.getActualColumnName());
+            sb.append(ifElementProperty.getEndingDelimiter());
+            sb.append(" " + condition + " ");
+        }
     }
 
     /**
@@ -222,12 +198,12 @@ public class PluginUtil {
         return "";
     }
 
-    public static Map<String, IntrospectedColumn> typeHandlersColumns(IntrospectedTable introspectedTable) {
+    public static Map<String, String> typeHandlersColumns(IntrospectedTable introspectedTable) {
         List<IntrospectedColumn> allColumns = introspectedTable.getAllColumns();
-        Map<String, IntrospectedColumn> handlerColumns = new HashMap<>();
+        Map<String, String> handlerColumns = new HashMap<>();
         for (IntrospectedColumn column : allColumns) {
             if (column.getRemarks().contains("#handler")) {
-                handlerColumns.put(column.getActualColumnName(), column);
+                handlerColumns.put(column.getActualColumnName(), typeHandler(column));
             }
         }
         return handlerColumns;

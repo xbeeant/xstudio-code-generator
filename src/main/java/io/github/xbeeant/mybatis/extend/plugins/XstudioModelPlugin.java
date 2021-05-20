@@ -59,7 +59,7 @@ public class XstudioModelPlugin extends PluginAdapter {
         valueOfKey.setVisibility(JavaVisibility.PUBLIC);
         valueOfKey.setReturnType(PluginUtil.getKeyFqjt(introspectedTable));
         valueOfKey.addAnnotation("@Override");
-        if (introspectedTable.getPrimaryKeyColumns().size() > 0) {
+        if (!introspectedTable.getPrimaryKeyColumns().isEmpty()) {
             if (introspectedTable.getPrimaryKeyColumns().size() == 1) {
                 StringBuilder sb = new StringBuilder();
                 sb.append("return ");
@@ -67,7 +67,7 @@ public class XstudioModelPlugin extends PluginAdapter {
                 sb.append(";");
                 valueOfKey.addBodyLine(sb.toString());
             } else {
-
+                // todo
             }
         }
 
@@ -78,7 +78,7 @@ public class XstudioModelPlugin extends PluginAdapter {
         assignKeyValue.addAnnotation("@Override");
 
         assignKeyValue.addParameter(new Parameter(PluginUtil.getKeyFqjt(introspectedTable), "value"));
-        if (introspectedTable.getPrimaryKeyColumns().size() > 0) {
+        if (!introspectedTable.getPrimaryKeyColumns().isEmpty()) {
             if (introspectedTable.getPrimaryKeyColumns().size() == 1) {
                 StringBuilder sb = new StringBuilder();
                 sb.append("this.");
@@ -86,7 +86,7 @@ public class XstudioModelPlugin extends PluginAdapter {
                 sb.append(" = value;");
                 assignKeyValue.addBodyLine(sb.toString());
             } else {
-
+                // todo
             }
         }
 

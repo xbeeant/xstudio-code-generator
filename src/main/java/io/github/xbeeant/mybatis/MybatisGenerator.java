@@ -1,5 +1,6 @@
 package io.github.xbeeant.mybatis;
 
+import com.alibaba.fastjson.JSON;
 import io.github.xbeeant.mybatis.po.*;
 import org.mybatis.generator.api.IntrospectedTable;
 import org.mybatis.generator.api.MyBatisGenerator;
@@ -379,6 +380,7 @@ public class MybatisGenerator {
             pluginConfiguration.addProperty("nonFuzzySearchColumn", properties.getXstudioProperty().getNonFuzzySearchColumn());
             pluginConfiguration.addProperty("usingBeginEnd", properties.getXstudioProperty().getBeginEnd());
             pluginConfiguration.addProperty("usingDateTime", properties.getXstudioProperty().getDateTime());
+            pluginConfiguration.addProperty("columns", JSON.toJSONString(properties.getXstudioProperty().getColumns()));
             context.addPluginConfiguration(pluginConfiguration);
         }
 

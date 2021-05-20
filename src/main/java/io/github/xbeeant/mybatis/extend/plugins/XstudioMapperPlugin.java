@@ -1,11 +1,18 @@
 package io.github.xbeeant.mybatis.extend.plugins;
 
+import com.alibaba.fastjson.JSON;
 import io.github.xbeeant.mybatis.extend.PluginUtil;
+import io.github.xbeeant.mybatis.po.ColumnProperty;
+import io.github.xbeeant.mybatis.po.IfElementProperty;
 import org.mybatis.generator.api.IntrospectedColumn;
 import org.mybatis.generator.api.IntrospectedTable;
 import org.mybatis.generator.api.PluginAdapter;
+import org.mybatis.generator.api.dom.OutputUtilities;
 import org.mybatis.generator.api.dom.java.*;
 import org.mybatis.generator.api.dom.xml.*;
+import org.mybatis.generator.codegen.mybatis3.ListUtilities;
+import org.mybatis.generator.codegen.mybatis3.MyBatis3FormattingUtilities;
+import org.mybatis.generator.config.Context;
 import org.mybatis.generator.internal.util.JavaBeansUtil;
 
 import java.util.*;
@@ -15,14 +22,26 @@ import java.util.*;
  * @version 2020/10/4
  */
 public class XstudioMapperPlugin extends PluginAdapter {
+    public static final String PREFIXED_EXAMPLE_WHERE_CLAUSE = "Prefixed_Example_Where_Clause";
+    public static final String JAVA_UTIL_LIST = "java.util.List";
+    public static final String WHERE = "where";
+    public static final String FOREACH = "foreach";
+    public static final String JDBC_TYPE = ",jdbcType=";
+    public static final String INDEX = "index";
+    public static final String COLLECTION = "collection";
+    public static final String SEPARATOR = "separator";
     private final List<String> digit = new ArrayList<>();
     private final List<String> time = new ArrayList<>();
     private final List<String> nonFuzzySearchColumn = new ArrayList<>();
     private final String parameterType = "parameterType";
+    private static final String EXAMPLE_PREFIX = "example.";
     private Boolean usingBeginEnd = false;
     private Boolean usingDateTime = false;
     private boolean generated = false;
     private XmlElement updateByPrimaryKeySelectiveElement;
+    private List<ColumnProperty> columnProperties = new ArrayList<>();
+    private Map<String, String> typeHandlers;
+    private ColumnComparator columnComparator;
 
     @Override
     public boolean clientBasicCountMethodGenerated(Method method, Interface interfaze, IntrospectedTable introspectedTable) {
@@ -181,16 +200,15 @@ public class XstudioMapperPlugin extends PluginAdapter {
 
     @Override
     public boolean sqlMapResultMapWithoutBLOBsElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
-        Map<String, IntrospectedColumn> introspectedColumns = PluginUtil.typeHandlersColumns(introspectedTable);
-        if (!introspectedColumns.isEmpty()) {
+        if (!typeHandlers.isEmpty()) {
             for (VisitableElement elementElement : element.getElements()) {
                 if (elementElement instanceof XmlElement) {
                     XmlElement xmlElement = (XmlElement) elementElement;
                     List<Attribute> attributes = xmlElement.getAttributes();
                     for (Attribute attribute : attributes) {
-                        IntrospectedColumn column = introspectedColumns.get(attribute.getValue());
-                        if (null != column) {
-                            xmlElement.addAttribute(new Attribute("typeHandler", PluginUtil.typeHandler(column)));
+                        String handler = typeHandlers.get(attribute.getValue());
+                        if (null != handler) {
+                            xmlElement.addAttribute(new Attribute("typeHandler", handler));
                             break;
                         }
                     }
@@ -201,20 +219,87 @@ public class XstudioMapperPlugin extends PluginAdapter {
     }
 
     @Override
+    public boolean sqlMapInsertElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
+        element.getElements().removeAll(element.getElements());
+        context.getCommentGenerator().addComment(element);
+        Context context = introspectedTable.getContext();
+        StringBuilder insertClause = new StringBuilder();
+
+        insertClause.append("insert into "); //$NON-NLS-1$
+        insertClause.append(introspectedTable
+                .getFullyQualifiedTableNameAtRuntime());
+
+        insertClause.append(" ("); //$NON-NLS-1$
+        StringBuilder valuesClause = new StringBuilder();
+        valuesClause.append("values ("); //$NON-NLS-1$
+
+        List<String> valuesClauses = new ArrayList<>();
+
+        List<IntrospectedColumn> columns =
+                ListUtilities.removeIdentityAndGeneratedAlwaysColumns(introspectedTable.getAllColumns());
+        for (int i = 0; i < columns.size(); i++) {
+            IntrospectedColumn introspectedColumn = columns.get(i);
+            introspectedColumn.setTypeHandler(typeHandlers.get(introspectedColumn.getActualColumnName()));
+            insertClause.append(MyBatis3FormattingUtilities
+                    .getEscapedColumnName(introspectedColumn));
+            valuesClause.append(MyBatis3FormattingUtilities
+                    .getParameterClause(introspectedColumn));
+            if (i + 1 < columns.size()) {
+                insertClause.append(", "); //$NON-NLS-1$
+                valuesClause.append(", "); //$NON-NLS-1$
+            }
+
+            if (valuesClause.length() > 80) {
+                element.addElement(new TextElement(insertClause.toString()));
+                insertClause.setLength(0);
+                OutputUtilities.xmlIndent(insertClause, 1);
+
+                valuesClauses.add(valuesClause.toString());
+                valuesClause.setLength(0);
+                OutputUtilities.xmlIndent(valuesClause, 1);
+            }
+        }
+
+        insertClause.append(')');
+        element.addElement(new TextElement(insertClause.toString()));
+
+        valuesClause.append(')');
+        valuesClauses.add(valuesClause.toString());
+        for (String clause : valuesClauses) {
+            element.addElement(new TextElement(clause));
+        }
+
+        return super.sqlMapInsertElementGenerated(element, introspectedTable);
+    }
+
+    @Override
+    public boolean sqlMapInsertSelectiveElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
+        List<VisitableElement> elements = element.getElements();
+        List<VisitableElement> ifElements = ((XmlElement) elements.get(elements.size() - 1)).getElements();
+        ifElements.removeAll(ifElements);
+        IfElementProperty ifElementProperty = new IfElementProperty(context);
+        ifElementProperty.setColumn(false);
+        ifElementProperty.setTextPrefix("");
+        for (IntrospectedColumn column : introspectedTable.getAllColumns()) {
+            PluginUtil.addIfElement((XmlElement) elements.get(elements.size() - 1), column, ifElementProperty, typeHandlers.get(column.getActualColumnName()));
+        }
+
+        return super.sqlMapInsertSelectiveElementGenerated(element, introspectedTable);
+    }
+
+    @Override
     public boolean sqlMapResultMapWithBLOBsElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
-        Map<String, IntrospectedColumn> introspectedColumns = PluginUtil.typeHandlersColumns(introspectedTable);
-        if (!introspectedColumns.isEmpty()) {
+        if (!typeHandlers.isEmpty()) {
             for (VisitableElement elementElement : element.getElements()) {
                 if (elementElement instanceof XmlElement) {
                     XmlElement xmlElement = (XmlElement) elementElement;
                     List<Attribute> attributes = xmlElement.getAttributes();
                     for (Attribute attribute : attributes) {
-                        IntrospectedColumn column = introspectedColumns.get(attribute.getValue());
-                        if (null != column) {
-                            xmlElement.addAttribute(new Attribute("typeHandler", PluginUtil.typeHandler(column)));
+                        String handler = typeHandlers.get(attribute.getValue());
+                        if (null != handler) {
+                            xmlElement.addAttribute(new Attribute("typeHandler", handler));
                         }
                     }
-
                 }
             }
         }
@@ -307,14 +392,25 @@ public class XstudioMapperPlugin extends PluginAdapter {
     public boolean sqlMapExampleWhereClauseElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
         element.getElements().removeAll(element.getElements());
         context.getCommentGenerator().addComment(element);
-        String prefix = "";
+
+        IfElementProperty ifElementProperty = new IfElementProperty(context);
+        ifElementProperty.setColumn(true);
+        ifElementProperty.setTextPrefix("and ");
+        ifElementProperty.setUsingDateTime(usingDateTime);
+        ifElementProperty.setUsingBeginEnd(usingBeginEnd);
         if (!"Example_Where_Clause".equalsIgnoreCase(element.getAttributes().get(0).getValue())) {
-            prefix = "example.";
             element.getAttributes().removeIf(attribute -> "id".equals(attribute.getName()));
-            element.addAttribute(new Attribute("id", "Prefixed_Example_Where_Clause"));
+            element.addAttribute(new Attribute("id", PREFIXED_EXAMPLE_WHERE_CLAUSE));
+            ifElementProperty.setJavaPropertyPrefix("example.");
         }
-        for (IntrospectedColumn column : introspectedTable.getAllColumns()) {
-            PluginUtil.addIfElement(element, column, prefix, usingBeginEnd, usingDateTime);
+
+        // column 排序
+        List<IntrospectedColumn> allColumns = introspectedTable.getAllColumns();
+        allColumns.sort(columnComparator);
+
+
+        for (IntrospectedColumn column : allColumns) {
+            PluginUtil.addIfElement(element, column, ifElementProperty, typeHandlers.get(column.getActualColumnName()));
         }
         return super.sqlMapExampleWhereClauseElementGenerated(element, introspectedTable);
     }
@@ -336,8 +432,8 @@ public class XstudioMapperPlugin extends PluginAdapter {
         }
 
 
-        XmlElement whereElement = new XmlElement("where");
-        PluginUtil.addInclude(whereElement, "Prefixed_Example_Where_Clause");
+        XmlElement whereElement = new XmlElement(WHERE);
+        PluginUtil.addInclude(whereElement, PREFIXED_EXAMPLE_WHERE_CLAUSE);
         element.getElements().add(whereElement);
 
         return super.sqlMapSelectByExampleWithoutBLOBsElementGenerated(element, introspectedTable);
@@ -359,8 +455,8 @@ public class XstudioMapperPlugin extends PluginAdapter {
             }
         }
 
-        XmlElement whereElement = new XmlElement("where");
-        PluginUtil.addInclude(whereElement, "Prefixed_Example_Where_Clause");
+        XmlElement whereElement = new XmlElement(WHERE);
+        PluginUtil.addInclude(whereElement, PREFIXED_EXAMPLE_WHERE_CLAUSE);
         element.getElements().add(whereElement);
 
         return super.sqlMapSelectByExampleWithBLOBsElementGenerated(element, introspectedTable);
@@ -386,6 +482,16 @@ public class XstudioMapperPlugin extends PluginAdapter {
     public boolean sqlMapUpdateByExampleWithBLOBsElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
         element.getAttributes().removeIf(attribute -> parameterType.equals(attribute.getName()));
 
+        List<VisitableElement> elements = element.getElements();
+        XmlElement setXmlElement = (XmlElement) elements.get(elements.size() - 2);
+        setXmlElement.getElements().removeAll(setXmlElement.getElements());
+        IfElementProperty ifElementProperty = new IfElementProperty(context);
+        ifElementProperty.setColumn(true);
+        ifElementProperty.setTextPrefix("and");
+        for (IntrospectedColumn nonPrimaryKeyColumn : introspectedTable.getNonPrimaryKeyColumns()) {
+            PluginUtil.addIfElement(setXmlElement, nonPrimaryKeyColumn, ifElementProperty, typeHandlers.get(nonPrimaryKeyColumn.getActualColumnName()));
+        }
+
         replaceWithWhereExampleElement(element);
         return super.sqlMapUpdateByExampleWithBLOBsElementGenerated(element, introspectedTable);
     }
@@ -393,7 +499,28 @@ public class XstudioMapperPlugin extends PluginAdapter {
     @Override
     public boolean sqlMapUpdateByExampleWithoutBLOBsElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
         element.getAttributes().removeIf(attribute -> parameterType.equals(attribute.getName()));
+        List<VisitableElement> elements = element.getElements();
+        XmlElement condition = (XmlElement) elements.get(elements.size() - 1);
+        elements.removeAll(elements);
+        context.getCommentGenerator().addComment(element);
+        element.getElements().add(new TextElement("update " + introspectedTable.getFullyQualifiedTableNameAtRuntime() + " set "));
 
+        StringBuilder sb;
+        int columnCount = introspectedTable.getAllColumns().size();
+        for (IntrospectedColumn column : introspectedTable.getAllColumns()) {
+            sb = new StringBuilder();
+            sb.append(context.getBeginningDelimiter());
+            sb.append(column.getActualColumnName());
+            sb.append(context.getEndingDelimiter());
+            sb.append(" = ");
+            sb.append(PluginUtil.columnValue(column, "record.", typeHandlers.get(column.getActualColumnName())));
+            if (columnCount > 1) {
+                sb.append(",");
+            }
+            columnCount -= 1;
+            element.getElements().add(new TextElement(sb.toString()));
+        }
+        element.getElements().add(condition);
         replaceWithWhereExampleElement(element);
         return super.sqlMapUpdateByExampleWithoutBLOBsElementGenerated(element, introspectedTable);
     }
@@ -401,6 +528,15 @@ public class XstudioMapperPlugin extends PluginAdapter {
     @Override
     public boolean sqlMapUpdateByPrimaryKeySelectiveElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
         updateByPrimaryKeySelectiveElement = element;
+        List<VisitableElement> elements = element.getElements();
+        XmlElement setXmlElement = (XmlElement) elements.get(elements.size() - 2);
+        setXmlElement.getElements().removeAll(setXmlElement.getElements());
+        IfElementProperty ifElementProperty = new IfElementProperty(context);
+        ifElementProperty.setColumn(true);
+        ifElementProperty.setTextPrefix("");
+        for (IntrospectedColumn nonPrimaryKeyColumn : introspectedTable.getNonPrimaryKeyColumns()) {
+            PluginUtil.addIfElement(setXmlElement, nonPrimaryKeyColumn, ifElementProperty, typeHandlers.get(nonPrimaryKeyColumn.getActualColumnName()));
+        }
 
         replaceKeyParam(element, introspectedTable);
         return super.sqlMapUpdateByPrimaryKeySelectiveElementGenerated(element, introspectedTable);
@@ -409,12 +545,94 @@ public class XstudioMapperPlugin extends PluginAdapter {
     @Override
     public boolean sqlMapUpdateByPrimaryKeyWithBLOBsElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
         replaceKeyParam(element, introspectedTable);
+
+        element.getAttributes().removeIf(attribute -> parameterType.equals(attribute.getName()));
+        List<VisitableElement> elements = element.getElements();
+        elements.removeAll(elements);
+        context.getCommentGenerator().addComment(element);
+        element.getElements().add(new TextElement("update " + introspectedTable.getFullyQualifiedTableNameAtRuntime() + " set "));
+
+        StringBuilder sb;
+        int columnCount = introspectedTable.getNonPrimaryKeyColumns().size();
+        for (IntrospectedColumn column : introspectedTable.getNonPrimaryKeyColumns()) {
+            sb = new StringBuilder();
+            sb.append(context.getBeginningDelimiter());
+            sb.append(column.getActualColumnName());
+            sb.append(context.getEndingDelimiter());
+            sb.append(" = ");
+            sb.append(PluginUtil.columnValue(column, "", typeHandlers.get(column.getActualColumnName())));
+            if (columnCount > 1) {
+                sb.append(",");
+            }
+            columnCount -= 1;
+            element.getElements().add(new TextElement(sb.toString()));
+        }
+
+        List<IntrospectedColumn> primaryKeyColumns = introspectedTable.getPrimaryKeyColumns();
+        element.getElements().add(new TextElement("where"));
+        for (IntrospectedColumn column : primaryKeyColumns) {
+            sb = new StringBuilder();
+            sb.append(context.getBeginningDelimiter());
+            sb.append(column.getActualColumnName());
+            sb.append(context.getEndingDelimiter());
+            sb.append(" = ");
+            sb.append(PluginUtil.columnValue(column, "record.", typeHandlers.get(column.getActualColumnName())));
+            if (columnCount > 1) {
+                sb.append("and");
+            }
+            columnCount -= 1;
+            element.getElements().add(new TextElement(sb.toString()));
+        }
+
         return super.sqlMapUpdateByPrimaryKeyWithBLOBsElementGenerated(element, introspectedTable);
     }
 
     @Override
     public boolean sqlMapUpdateByPrimaryKeyWithoutBLOBsElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
         replaceKeyParam(element, introspectedTable);
+
+
+        element.getAttributes().removeIf(attribute -> parameterType.equals(attribute.getName()));
+        List<VisitableElement> elements = element.getElements();
+        elements.removeAll(elements);
+        context.getCommentGenerator().addComment(element);
+        element.getElements().add(new TextElement("update " + introspectedTable.getFullyQualifiedTableNameAtRuntime() + " set "));
+
+        StringBuilder sb;
+        int columnCount = introspectedTable.getNonPrimaryKeyColumns().size();
+        for (IntrospectedColumn column : introspectedTable.getNonPrimaryKeyColumns()) {
+            if (column.isBLOBColumn()) {
+                continue;
+            }
+            sb = new StringBuilder();
+            sb.append(context.getBeginningDelimiter());
+            sb.append(column.getActualColumnName());
+            sb.append(context.getEndingDelimiter());
+            sb.append(" = ");
+            sb.append(PluginUtil.columnValue(column, "", typeHandlers.get(column.getActualColumnName())));
+            if (columnCount > 1) {
+                sb.append(",");
+            }
+            columnCount -= 1;
+            element.getElements().add(new TextElement(sb.toString()));
+        }
+
+        List<IntrospectedColumn> primaryKeyColumns = introspectedTable.getPrimaryKeyColumns();
+        element.getElements().add(new TextElement("where"));
+        for (IntrospectedColumn column : primaryKeyColumns) {
+            sb = new StringBuilder();
+            sb.append(context.getBeginningDelimiter());
+            sb.append(column.getActualColumnName());
+            sb.append(context.getEndingDelimiter());
+            sb.append(" = ");
+            sb.append(PluginUtil.columnValue(column, "", typeHandlers.get(column.getActualColumnName())));
+            if (columnCount > 1) {
+                sb.append("and");
+            }
+            columnCount -= 1;
+            element.getElements().add(new TextElement(sb.toString()));
+        }
+
         return super.sqlMapUpdateByPrimaryKeyWithoutBLOBsElementGenerated(element, introspectedTable);
     }
 
@@ -449,6 +667,14 @@ public class XstudioMapperPlugin extends PluginAdapter {
         time.add("TIMESTAMP");
         time.add("DATE");
         time.add("TIME");
+
+        typeHandlers = PluginUtil.typeHandlersColumns(introspectedTable);
+        for (ColumnProperty columnProperty : columnProperties) {
+            if (null != columnProperty.getTypeHandler()) {
+                typeHandlers.put(columnProperty.getColumn(), columnProperty.getTypeHandler());
+            }
+        }
+
         super.initialized(introspectedTable);
     }
 
@@ -460,12 +686,12 @@ public class XstudioMapperPlugin extends PluginAdapter {
     private void batchInsertSelective(Document document, IntrospectedTable introspectedTable) {
         XmlElement element = new XmlElement("insert");
         element.addAttribute(new Attribute("id", "batchInsertSelective"));
-        element.addAttribute(new Attribute(parameterType, "java.util.List"));
-        XmlElement foreachElement = new XmlElement("foreach");
-        foreachElement.addAttribute(new Attribute("collection", "list"));
-        foreachElement.addAttribute(new Attribute("index", "index"));
+        element.addAttribute(new Attribute(parameterType, JAVA_UTIL_LIST));
+        XmlElement foreachElement = new XmlElement(FOREACH);
+        foreachElement.addAttribute(new Attribute(COLLECTION, "list"));
+        foreachElement.addAttribute(new Attribute(INDEX, INDEX));
         foreachElement.addAttribute(new Attribute("item", "item"));
-        foreachElement.addAttribute(new Attribute("separator", ";"));
+        foreachElement.addAttribute(new Attribute(SEPARATOR, ";"));
         context.getCommentGenerator().addComment(element);
 
         List<IntrospectedColumn> columns = introspectedTable.getAllColumns();
@@ -477,7 +703,12 @@ public class XstudioMapperPlugin extends PluginAdapter {
         for (IntrospectedColumn column : columns) {
             ifXml = new XmlElement("if");
             ifXml.addAttribute(new Attribute("test", "item." + column.getJavaProperty() + " != null "));
-            text = new TextElement(column.getActualColumnName() + " = #{item." + column.getJavaProperty() + ",jdbcType=" + column.getJdbcTypeName() + "},");
+            String handler = typeHandlers.get(column.getActualColumnName());
+            if (null != handler) {
+                text = new TextElement(column.getActualColumnName() + " = #{item." + column.getJavaProperty() + JDBC_TYPE + column.getJdbcTypeName() + ",typeHandler=" + handler + "},");
+            } else {
+                text = new TextElement(column.getActualColumnName() + " = #{item." + column.getJavaProperty() + JDBC_TYPE + column.getJdbcTypeName() + "},");
+            }
             ifXml.addElement(text);
             set.addElement(ifXml);
         }
@@ -493,19 +724,19 @@ public class XstudioMapperPlugin extends PluginAdapter {
         }
         XmlElement element = new XmlElement("delete");
         element.addAttribute(new Attribute("id", "batchDeleteByPrimaryKey"));
-        element.addAttribute(new Attribute(parameterType, "java.util.List"));
-        XmlElement foreachElement = new XmlElement("foreach");
-        foreachElement.addAttribute(new Attribute("collection", "list"));
-        foreachElement.addAttribute(new Attribute("index", "index"));
+        element.addAttribute(new Attribute(parameterType, JAVA_UTIL_LIST));
+        XmlElement foreachElement = new XmlElement(FOREACH);
+        foreachElement.addAttribute(new Attribute(COLLECTION, "list"));
+        foreachElement.addAttribute(new Attribute(INDEX, INDEX));
         foreachElement.addAttribute(new Attribute("item", "item"));
-        foreachElement.addAttribute(new Attribute("separator", ";"));
+        foreachElement.addAttribute(new Attribute(SEPARATOR, ";"));
         context.getCommentGenerator().addComment(element);
 
         foreachElement.addElement(new TextElement("delete from " + introspectedTable.getFullyQualifiedTableNameAtRuntime()));
-        XmlElement where = new XmlElement("where");
+        XmlElement where = new XmlElement(WHERE);
         String and = "";
         for (IntrospectedColumn primaryKeyColumn : introspectedTable.getPrimaryKeyColumns()) {
-            where.addElement(new TextElement(and + primaryKeyColumn.getActualColumnName() + " = #{item." + primaryKeyColumn.getJavaProperty() + ",jdbcType=" + primaryKeyColumn.getJdbcTypeName() + "}"));
+            where.addElement(new TextElement(and + primaryKeyColumn.getActualColumnName() + " = #{item." + primaryKeyColumn.getJavaProperty() + JDBC_TYPE + primaryKeyColumn.getJdbcTypeName() + "}"));
             and = "and ";
         }
         foreachElement.addElement(where);
@@ -524,13 +755,13 @@ public class XstudioMapperPlugin extends PluginAdapter {
         }
         XmlElement element = new XmlElement("update");
         element.addAttribute(new Attribute("id", "batchUpdateByPrimaryKeySelective"));
-        element.addAttribute(new Attribute(parameterType, "java.util.List"));
+        element.addAttribute(new Attribute(parameterType, JAVA_UTIL_LIST));
 
-        XmlElement foreachElement = new XmlElement("foreach");
-        foreachElement.addAttribute(new Attribute("collection", "list"));
-        foreachElement.addAttribute(new Attribute("index", "index"));
+        XmlElement foreachElement = new XmlElement(FOREACH);
+        foreachElement.addAttribute(new Attribute(COLLECTION, "list"));
+        foreachElement.addAttribute(new Attribute(INDEX, INDEX));
         foreachElement.addAttribute(new Attribute("item", "item"));
-        foreachElement.addAttribute(new Attribute("separator", ";"));
+        foreachElement.addAttribute(new Attribute(SEPARATOR, ";"));
         context.getCommentGenerator().addComment(element);
         XmlElement setXmlElement = new XmlElement("set");
         for (VisitableElement visitableElement : updateByPrimaryKeySelectiveElement.getElements()) {
@@ -578,7 +809,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
         rootXmlElement.addAttribute(attribute);
         attribute = new Attribute("resultMap", "BaseResultMap");
         rootXmlElement.addAttribute(attribute);
-        XmlElement whereElement = new XmlElement("where");
+        XmlElement whereElement = new XmlElement(WHERE);
         fromCondition(introspectedTable, rootXmlElement);
 
         if (pager) {
@@ -604,7 +835,11 @@ public class XstudioMapperPlugin extends PluginAdapter {
         }
         rootXmlElement.addAttribute(attribute);
 
-        for (IntrospectedColumn column : introspectedTable.getAllColumns()) {
+        // column 排序
+        List<IntrospectedColumn> allColumns = introspectedTable.getAllColumns();
+        allColumns.sort(columnComparator);
+
+        for (IntrospectedColumn column : allColumns) {
             if (time.contains(column.getJdbcTypeName())) {
                 if (usingBeginEnd) {
                     useBeginEnd(introspectedTable, pager, rootXmlElement, column);
@@ -671,7 +906,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
         String name = column.getJavaProperty();
         String prefix = "";
         if (pager) {
-            prefix = "example.";
+            prefix = EXAMPLE_PREFIX;
         }
 
         testClause = prefix + name + " != null";
@@ -731,7 +966,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
         String name = column.getJavaProperty();
         String prefix = "";
         if (pager) {
-            prefix = "example.";
+            prefix = EXAMPLE_PREFIX;
         }
         if (digit.contains(column.getJdbcTypeName())
                 || time.contains(column.getJdbcTypeName())) {
@@ -749,7 +984,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
         String columName = column.getActualColumnName();
         String prefix = "";
         if (pager) {
-            prefix = "example.";
+            prefix = EXAMPLE_PREFIX;
         }
         String remarks = column.getRemarks();
         remarks = remarks.replaceAll(" ", "");
@@ -760,16 +995,16 @@ public class XstudioMapperPlugin extends PluginAdapter {
                 || remarks.contains("fuzzy:false")
                 || column.isBLOBColumn()
         ) {
-            return "AND " + columName + " = #{" + prefix + name + ",jdbcType=" + column.getJdbcTypeName() + "}";
+            return "AND " + columName + " = #{" + prefix + name + JDBC_TYPE + column.getJdbcTypeName() + "}";
         }
         if (remarks.contains("fuzzy:startWidth")) {
-            return "AND " + columName + " LIKE CONCAT(#{" + prefix + name + ",jdbcType=" + column.getJdbcTypeName() + "}, '%')";
+            return "AND " + columName + " LIKE CONCAT(#{" + prefix + name + JDBC_TYPE + column.getJdbcTypeName() + "}, '%')";
         }
         if (remarks.contains("fuzzy:endWidth")) {
-            return "AND " + columName + " LIKE CONCAT('%', #{" + prefix + name + ",jdbcType=" + column.getJdbcTypeName() + "})";
+            return "AND " + columName + " LIKE CONCAT('%', #{" + prefix + name + JDBC_TYPE + column.getJdbcTypeName() + "})";
         }
 
-        return "AND " + columName + " LIKE CONCAT('%', #{" + prefix + name + ",jdbcType=" + column.getJdbcTypeName() + "}, '%')";
+        return "AND " + columName + " LIKE CONCAT('%', #{" + prefix + name + JDBC_TYPE + column.getJdbcTypeName() + "}, '%')";
     }
 
     private boolean isKeyColumn(IntrospectedColumn column, IntrospectedTable introspectedTable) {
@@ -809,18 +1044,29 @@ public class XstudioMapperPlugin extends PluginAdapter {
         //      <include refid="Example_Where_Clause" />
         //    </if>
         elements.remove(visitableElement);
-        XmlElement whereElement = new XmlElement("where");
-        PluginUtil.addInclude(whereElement, "Prefixed_Example_Where_Clause");
+        XmlElement whereElement = new XmlElement(WHERE);
+        PluginUtil.addInclude(whereElement, PREFIXED_EXAMPLE_WHERE_CLAUSE);
         elements.add(whereElement);
     }
 
     @Override
     public boolean validate(List<String> warnings) {
         String nonFuzzySearchColumnStr = properties.getProperty("nonFuzzySearchColumn");
+        String columnPropertiesStr = properties.getProperty("columns");
+        columnProperties = JSON.parseArray(columnPropertiesStr, ColumnProperty.class);
+
+        for (ColumnProperty columnProperty : columnProperties) {
+            if (!columnProperty.getFuzzySearch()) {
+                nonFuzzySearchColumn.add(columnProperty.getColumn());
+            }
+        }
+
+        columnComparator = new ColumnComparator();
+        columnComparator.setColumnProperties(columnProperties);
         usingBeginEnd = Boolean.valueOf(properties.getProperty("usingBeginEnd"));
         usingDateTime = Boolean.valueOf(properties.getProperty("usingDateTime"));
         if (null != nonFuzzySearchColumnStr) {
-            String[] split = nonFuzzySearchColumnStr.replaceAll(" ","").split(",");
+            String[] split = nonFuzzySearchColumnStr.replaceAll(" ", "").split(",");
             if (split.length > 0) {
                 nonFuzzySearchColumn.addAll(Arrays.asList(split));
             }

@@ -29,6 +29,9 @@ public class XstudioServicePlugin extends PluginAdapter {
 
     private final FullyQualifiedJavaType autowiredAnnotationFqjt = new FullyQualifiedJavaType("org.springframework.beans.factory.annotation.Autowired");
 
+    private static final String OVERRIDE = "@Override";
+    private static final String PARAM_RECORD = "record";
+
     @Override
     public boolean validate(List<String> warnings) {
         serviceRootInterface = properties.getProperty("serviceRootInterface");
@@ -85,9 +88,9 @@ public class XstudioServicePlugin extends PluginAdapter {
 
         // with blobs
         List<IntrospectedColumn> blobColumns = introspectedTable.getBLOBColumns();
-        if (null != blobColumns && blobColumns.size() > 0) {
+        if (!blobColumns.isEmpty()) {
             Method isWithBlobs = new Method("isWithBlobs");
-            isWithBlobs.addAnnotation("@Override");
+            isWithBlobs.addAnnotation(OVERRIDE);
             isWithBlobs.setVisibility(JavaVisibility.PUBLIC);
             isWithBlobs.addBodyLine("return true;");
             isWithBlobs.setReturnType(FullyQualifiedJavaType.getBooleanPrimitiveInstance());
@@ -112,7 +115,7 @@ public class XstudioServicePlugin extends PluginAdapter {
         rootClientFqjt.addTypeArgument(PluginUtil.getKeyFqjt(introspectedTable));
 
         Method getDao = new Method("getRepositoryDao");
-        getDao.addAnnotation("@Override");
+        getDao.addAnnotation(OVERRIDE);
         getDao.setVisibility(JavaVisibility.PUBLIC);
         getDao.setReturnType(rootClientFqjt);
         topLevelClass.addImportedType(mybatis3JavaMapperType);
@@ -123,17 +126,15 @@ public class XstudioServicePlugin extends PluginAdapter {
 
         // setKey Method
         Method setDefaults = new Method("setDefaults");
-        setDefaults.addAnnotation("@Override");
+        setDefaults.addAnnotation(OVERRIDE);
         setDefaults.setVisibility(JavaVisibility.PUBLIC);
-        setDefaults.addParameter(new Parameter(baseRecordTypeFqjt, "record"));
+        setDefaults.addParameter(new Parameter(baseRecordTypeFqjt, PARAM_RECORD));
         topLevelClass.addImportedType(baseRecordTypeFqjt);
 
 
         // getKeyValue Method
         topLevelClass.addImportedType(baseRecordTypeFqjt);
 
-
-        boolean generated = false;
         boolean noTransferFlag = false;
 
         StringBuilder annotationString = new StringBuilder();
@@ -167,9 +168,9 @@ public class XstudioServicePlugin extends PluginAdapter {
             FullyQualifiedJavaType model = new FullyQualifiedJavaType(introspectedTable.getBaseRecordType());
             returnType.addTypeArgument(model);
             insertSelective.setReturnType(returnType);
-            insertSelective.addParameter(new Parameter(baseRecordTypeFqjt, "record", annotationString.toString()));
+            insertSelective.addParameter(new Parameter(baseRecordTypeFqjt, PARAM_RECORD, annotationString.toString()));
             topLevelClass.addImportedType(baseRecordTypeFqjt);
-            insertSelective.addAnnotation("@Override");
+            insertSelective.addAnnotation(OVERRIDE);
             StringBuilder stringBuilder = new StringBuilder("");
             stringBuilder.append("return super.insertSelective(record)");
             topLevelClass.addMethod(insertSelective);
@@ -181,8 +182,8 @@ public class XstudioServicePlugin extends PluginAdapter {
             FullyQualifiedJavaType returnType2 = new FullyQualifiedJavaType(responseObject);
             returnType2.addTypeArgument(model);
             updateByPrimaryKeySelective.setReturnType(returnType);
-            updateByPrimaryKeySelective.addParameter(new Parameter(baseRecordTypeFqjt, "record", annotationString.toString()));
-            updateByPrimaryKeySelective.addAnnotation("@Override");
+            updateByPrimaryKeySelective.addParameter(new Parameter(baseRecordTypeFqjt, PARAM_RECORD, annotationString.toString()));
+            updateByPrimaryKeySelective.addAnnotation(OVERRIDE);
             StringBuilder stringBuilder2 = new StringBuilder("");
             stringBuilder2.append("return super.updateByPrimaryKeySelective(record)");
             topLevelClass.addMethod(updateByPrimaryKeySelective);
