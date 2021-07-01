@@ -281,7 +281,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
         ifElementProperty.setColumn(false);
         ifElementProperty.setTextPrefix("");
         for (IntrospectedColumn column : introspectedTable.getAllColumns()) {
-            PluginUtil.addIfElement((XmlElement) elements.get(elements.size() - 1), column, ifElementProperty, typeHandlers.get(column.getActualColumnName()));
+            PluginUtil.addIfElement((XmlElement) elements.get(elements.size() - 1), column, ifElementProperty, typeHandlers.get(column.getActualColumnName()), true);
         }
 
         return super.sqlMapInsertSelectiveElementGenerated(element, introspectedTable);
@@ -410,7 +410,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
 
 
         for (IntrospectedColumn column : allColumns) {
-            PluginUtil.addIfElement(element, column, ifElementProperty, typeHandlers.get(column.getActualColumnName()));
+            PluginUtil.addIfElement(element, column, ifElementProperty, typeHandlers.get(column.getActualColumnName()), false);
         }
         return super.sqlMapExampleWhereClauseElementGenerated(element, introspectedTable);
     }
@@ -489,7 +489,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
         ifElementProperty.setColumn(true);
         ifElementProperty.setTextPrefix("and");
         for (IntrospectedColumn nonPrimaryKeyColumn : introspectedTable.getNonPrimaryKeyColumns()) {
-            PluginUtil.addIfElement(setXmlElement, nonPrimaryKeyColumn, ifElementProperty, typeHandlers.get(nonPrimaryKeyColumn.getActualColumnName()));
+            PluginUtil.addIfElement(setXmlElement, nonPrimaryKeyColumn, ifElementProperty, typeHandlers.get(nonPrimaryKeyColumn.getActualColumnName()), false);
         }
 
         replaceWithWhereExampleElement(element);
@@ -513,7 +513,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
             sb.append(column.getActualColumnName());
             sb.append(context.getEndingDelimiter());
             sb.append(" = ");
-            sb.append(PluginUtil.columnValue(column, "record.", typeHandlers.get(column.getActualColumnName())));
+            sb.append(PluginUtil.columnValue(column, "record.", typeHandlers.get(column.getActualColumnName()), false));
             if (columnCount > 1) {
                 sb.append(",");
             }
@@ -535,7 +535,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
         ifElementProperty.setColumn(true);
         ifElementProperty.setTextPrefix("");
         for (IntrospectedColumn nonPrimaryKeyColumn : introspectedTable.getNonPrimaryKeyColumns()) {
-            PluginUtil.addIfElement(setXmlElement, nonPrimaryKeyColumn, ifElementProperty, typeHandlers.get(nonPrimaryKeyColumn.getActualColumnName()));
+            PluginUtil.addIfElement(setXmlElement, nonPrimaryKeyColumn, ifElementProperty, typeHandlers.get(nonPrimaryKeyColumn.getActualColumnName()), true);
         }
 
         replaceKeyParam(element, introspectedTable);
@@ -560,7 +560,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
             sb.append(column.getActualColumnName());
             sb.append(context.getEndingDelimiter());
             sb.append(" = ");
-            sb.append(PluginUtil.columnValue(column, "", typeHandlers.get(column.getActualColumnName())));
+            sb.append(PluginUtil.columnValue(column, "", typeHandlers.get(column.getActualColumnName()), false));
             if (columnCount > 1) {
                 sb.append(",");
             }
@@ -576,7 +576,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
             sb.append(column.getActualColumnName());
             sb.append(context.getEndingDelimiter());
             sb.append(" = ");
-            sb.append(PluginUtil.columnValue(column, "record.", typeHandlers.get(column.getActualColumnName())));
+            sb.append(PluginUtil.columnValue(column, "record.", typeHandlers.get(column.getActualColumnName()), false));
             if (columnCount > 1) {
                 sb.append("and");
             }
@@ -609,7 +609,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
             sb.append(column.getActualColumnName());
             sb.append(context.getEndingDelimiter());
             sb.append(" = ");
-            sb.append(PluginUtil.columnValue(column, "", typeHandlers.get(column.getActualColumnName())));
+            sb.append(PluginUtil.columnValue(column, "", typeHandlers.get(column.getActualColumnName()), false));
             if (columnCount > 1) {
                 sb.append(",");
             }
@@ -625,7 +625,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
             sb.append(column.getActualColumnName());
             sb.append(context.getEndingDelimiter());
             sb.append(" = ");
-            sb.append(PluginUtil.columnValue(column, "", typeHandlers.get(column.getActualColumnName())));
+            sb.append(PluginUtil.columnValue(column, "", typeHandlers.get(column.getActualColumnName()), false));
             if (columnCount > 1) {
                 sb.append("and");
             }

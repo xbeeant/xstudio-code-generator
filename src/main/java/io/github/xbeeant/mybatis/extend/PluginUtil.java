@@ -20,22 +20,31 @@ import java.util.regex.Pattern;
  * @version 2019/5/1
  */
 public class PluginUtil {
+
+    private PluginUtil() {
+
+    }
+
     private static final Pattern HANDLER_PATTERN = Pattern.compile("#handler\\s*:\\s*([\\w\\W]*)#");
 
-    public static String columnValue(IntrospectedColumn column, String javaPropertyPrefix, String handler) {
+    public static String columnValue(IntrospectedColumn column, String javaPropertyPrefix, String handler, boolean endOfComman) {
         column.setTypeHandler(handler);
-        return MyBatis3FormattingUtilities.getParameterClause(column, javaPropertyPrefix);
+        String parameterClause = MyBatis3FormattingUtilities.getParameterClause(column, javaPropertyPrefix);
+        if (endOfComman) {
+            parameterClause += ",";
+        }
+        return parameterClause;
     }
 
     /**
      * 添加If元素
-     *
-     * @param xmlElement        where元素
+     *  @param xmlElement        where元素
      * @param column            列
      * @param ifElementProperty 配置
      * @param handler           handler
+     * @param endOfComma        is end of comma
      */
-    public static void addIfElement(XmlElement xmlElement, IntrospectedColumn column, IfElementProperty ifElementProperty, String handler) {
+    public static void addIfElement(XmlElement xmlElement, IntrospectedColumn column, IfElementProperty ifElementProperty, String handler, boolean endOfComma) {
         XmlElement rootIfElement = new XmlElement("if");
         StringBuilder sb = new StringBuilder();
         sb.append(ifElementProperty.getJavaPropertyPrefix());
@@ -62,7 +71,7 @@ public class PluginUtil {
 
                 ifElementCondition(sb, ifElementProperty, column, "=");
 
-                sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler));
+                sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler, endOfComma));
 
                 ifElement.addElement(new TextElement(sb.toString()));
                 rootIfElement.addElement(ifElement);
@@ -80,7 +89,7 @@ public class PluginUtil {
                 sb = new StringBuilder();
                 ifElementCondition(sb, ifElementProperty, column, "&gt;=");
 
-                sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler));
+                sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler, endOfComma));
 
                 ifElement.addElement(new TextElement(sb.toString()));
                 rootIfElement.addElement(ifElement);
@@ -96,13 +105,13 @@ public class PluginUtil {
 
                 sb = new StringBuilder();
                 ifElementCondition(sb, ifElementProperty, column, "&lt;=");
-                sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler));
+                sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler, endOfComma));
                 ifElement.addElement(new TextElement(sb.toString()));
                 rootIfElement.addElement(ifElement);
             } else {
                 sb = new StringBuilder();
                 ifElementCondition(sb, ifElementProperty, column, "=");
-                sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler));
+                sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler, endOfComma));
                 rootIfElement.addElement(new TextElement(sb.toString()));
                 if (ifElementProperty.getUsingBeginEnd()) {
                     // **Begin
@@ -116,7 +125,7 @@ public class PluginUtil {
                     sb = new StringBuilder();
                     ifElementCondition(sb, ifElementProperty, column, "&gt;=");
 
-                    sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler));
+                    sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler, endOfComma));
                     rootIfElement.addElement(new TextElement(sb.toString()));
                     rootIfElement.addAttribute(attribute);
                     xmlElement.addElement(rootIfElement);
@@ -130,7 +139,7 @@ public class PluginUtil {
 
                     sb = new StringBuilder();
                     ifElementCondition(sb, ifElementProperty, column, "&lt;=");
-                    sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler));
+                    sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler, endOfComma));
                     rootIfElement.addElement(new TextElement(sb.toString()));
                     rootIfElement.addAttribute(attribute);
                     xmlElement.addElement(rootIfElement);
@@ -139,7 +148,7 @@ public class PluginUtil {
         } else {
             sb = new StringBuilder();
             ifElementCondition(sb, ifElementProperty, column, "=");
-            sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler));
+            sb.append(columnValue(column, ifElementProperty.getJavaPropertyPrefix(), handler, endOfComma));
             rootIfElement.addElement(new TextElement(sb.toString()));
         }
 
