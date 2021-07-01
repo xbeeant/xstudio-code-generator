@@ -36,6 +36,9 @@ public class ColumnProperty {
     }
 
     public String getTypeHandler() {
+        if (null == typeHandler || "".equals(typeHandler)) {
+            return null;
+        }
         return typeHandler;
     }
 
