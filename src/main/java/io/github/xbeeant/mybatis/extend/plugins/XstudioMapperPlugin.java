@@ -480,20 +480,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
 
     @Override
     public boolean sqlMapUpdateByExampleWithBLOBsElementGenerated(XmlElement element, IntrospectedTable introspectedTable) {
-        element.getAttributes().removeIf(attribute -> parameterType.equals(attribute.getName()));
-
-        List<VisitableElement> elements = element.getElements();
-        XmlElement setXmlElement = (XmlElement) elements.get(elements.size() - 2);
-        setXmlElement.getElements().removeAll(setXmlElement.getElements());
-        IfElementProperty ifElementProperty = new IfElementProperty(context);
-        ifElementProperty.setColumn(true);
-        ifElementProperty.setTextPrefix("and");
-        for (IntrospectedColumn nonPrimaryKeyColumn : introspectedTable.getNonPrimaryKeyColumns()) {
-            PluginUtil.addIfElement(setXmlElement, nonPrimaryKeyColumn, ifElementProperty, typeHandlers.get(nonPrimaryKeyColumn.getActualColumnName()), false);
-        }
-
-        replaceWithWhereExampleElement(element);
-        return super.sqlMapUpdateByExampleWithBLOBsElementGenerated(element, introspectedTable);
+        return sqlMapUpdateByExampleWithoutBLOBsElementGenerated(element, introspectedTable);
     }
 
     @Override
