@@ -30,8 +30,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
     public static final String INDEX = "index";
     public static final String COLLECTION = "collection";
     public static final String SEPARATOR = "separator";
-    private final List<String> digit = new ArrayList<>();
-    private final List<String> time = new ArrayList<>();
+
     private final List<String> nonFuzzySearchColumn = new ArrayList<>();
     private final String parameterType = "parameterType";
     private static final String EXAMPLE_PREFIX = "example.";
@@ -630,32 +629,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
 
     @Override
     public void initialized(IntrospectedTable introspectedTable) {
-        digit.add("BYTE");
-        // float
-        digit.add("FLOAT");
-        digit.add("DOUBLE");
-        // long
-        digit.add("BIGINT");
-        // float
-        digit.add("REAL");
-        // int
-        digit.add("INTEGER");
-        // byte
-        digit.add("TINYINT");
-        // short
-        digit.add("SMALLINT");
-        // boolean
-        digit.add("BIT");
-        digit.add("BOOLEAN");
-        // BigDecimal
-        digit.add("NUMERIC");
-        digit.add("DECIMAL");
-
-        time.add("TIMESTAMP");
-        time.add("DATE");
-        time.add("TIME");
-
-        typeHandlers = PluginUtil.typeHandlersColumns(introspectedTable);
+        typeHandlers = PluginUtil.typeHandlersColumns(introspectedTable, usingDateTime);
         for (ColumnProperty columnProperty : columnProperties) {
             if (null != columnProperty.getTypeHandler()) {
                 typeHandlers.put(columnProperty.getColumn(), columnProperty.getTypeHandler());
@@ -827,7 +801,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
         allColumns.sort(columnComparator);
 
         for (IntrospectedColumn column : allColumns) {
-            if (time.contains(column.getJdbcTypeName())) {
+            if (PluginUtil.time.contains(column.getJdbcTypeName())) {
                 if (usingBeginEnd) {
                     useBeginEnd(introspectedTable, pager, rootXmlElement, column);
                 } else if (usingDateTime) {
@@ -955,10 +929,10 @@ public class XstudioMapperPlugin extends PluginAdapter {
         if (pager) {
             prefix = EXAMPLE_PREFIX;
         }
-        if (digit.contains(column.getJdbcTypeName())
-                || time.contains(column.getJdbcTypeName())) {
+        if (PluginUtil.digit.contains(column.getJdbcTypeName())
+                || PluginUtil.time.contains(column.getJdbcTypeName())) {
             String suffix = "";
-            if (digit.contains(column.getJdbcTypeName())) {
+            if (PluginUtil.digit.contains(column.getJdbcTypeName())) {
                 suffix = " or " + prefix + name + " == 0";
             }
             return prefix + name + " != null" + suffix;
@@ -975,8 +949,8 @@ public class XstudioMapperPlugin extends PluginAdapter {
         }
         String remarks = column.getRemarks();
         remarks = remarks.replaceAll(" ", "");
-        if (digit.contains(column.getJdbcTypeName().toUpperCase())
-                || time.contains(column.getJdbcTypeName().toUpperCase())
+        if (PluginUtil.digit.contains(column.getJdbcTypeName().toUpperCase())
+                || PluginUtil.time.contains(column.getJdbcTypeName().toUpperCase())
                 || nonFuzzySearchColumn.contains(columName)
                 || isKeyColumn(column, introspectedTable)
                 || remarks.contains("fuzzy:false")

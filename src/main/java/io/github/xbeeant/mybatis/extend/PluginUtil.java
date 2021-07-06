@@ -9,9 +9,7 @@ import org.mybatis.generator.api.dom.xml.TextElement;
 import org.mybatis.generator.api.dom.xml.XmlElement;
 import org.mybatis.generator.codegen.mybatis3.MyBatis3FormattingUtilities;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,6 +22,24 @@ public class PluginUtil {
     private PluginUtil() {
 
     }
+
+    public static final List<String> digit = Arrays.asList("BYTE",
+            "FLOAT",
+            "DOUBLE",
+            "BIGINT",
+            "REAL",
+            "INTEGER",
+            "TINYINT",
+            "SMALLINT",
+            "BIT",
+            "BOOLEAN",
+            "NUMERIC",
+            "DECIMAL");
+
+    public static   final List<String> time = Arrays.asList(
+            "TIMESTAMP",
+            "DATE",
+            "TIME");
 
     private static final Pattern HANDLER_PATTERN = Pattern.compile("#handler\\s*:\\s*([\\w\\W]*)#");
 
@@ -38,7 +54,8 @@ public class PluginUtil {
 
     /**
      * 添加If元素
-     *  @param xmlElement        where元素
+     *
+     * @param xmlElement        where元素
      * @param column            列
      * @param ifElementProperty 配置
      * @param handler           handler
@@ -207,12 +224,15 @@ public class PluginUtil {
         return "";
     }
 
-    public static Map<String, String> typeHandlersColumns(IntrospectedTable introspectedTable) {
+    public static Map<String, String> typeHandlersColumns(IntrospectedTable introspectedTable, Boolean usingDateTime) {
         List<IntrospectedColumn> allColumns = introspectedTable.getAllColumns();
         Map<String, String> handlerColumns = new HashMap<>();
         for (IntrospectedColumn column : allColumns) {
             if (column.getRemarks().contains("#handler")) {
                 handlerColumns.put(column.getActualColumnName(), typeHandler(column));
+            }
+            if (usingDateTime && time.contains(column.getJdbcTypeName())) {
+                handlerColumns.put(column.getActualColumnName(), "io.github.xbeeant.spring.mybatis.typehandler.DateTimeResultHandler");
             }
         }
         return handlerColumns;
