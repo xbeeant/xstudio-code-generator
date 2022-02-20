@@ -17,20 +17,16 @@ import java.util.List;
  * @version 2020/10/5
  */
 public class XstudioServicePlugin extends PluginAdapter {
+    private static final String OVERRIDE = "@Override";
+    private final FullyQualifiedJavaType autowiredAnnotationFqjt = new FullyQualifiedJavaType("org.springframework.beans.factory.annotation.Autowired");
     private String serviceRootInterface;
     private String serviceTargetPackage;
-
     private String serviceImplementRootInterface;
     private String serviceImplementTargetPackage;
-
     private String rootClient;
     private String idGenerator;
     private String responseObject;
-
-    private final FullyQualifiedJavaType autowiredAnnotationFqjt = new FullyQualifiedJavaType("org.springframework.beans.factory.annotation.Autowired");
-
-    private static final String OVERRIDE = "@Override";
-    private static final String PARAM_RECORD = "record";
+    private String paramRecord;
 
     @Override
     public boolean validate(List<String> warnings) {
@@ -42,6 +38,13 @@ public class XstudioServicePlugin extends PluginAdapter {
         idGenerator = properties.getProperty("idGenerator");
         responseObject = properties.getProperty("responseObject");
         return true;
+    }
+
+    @Override
+    public void initialized(IntrospectedTable introspectedTable) {
+        FullyQualifiedJavaType baseRecordTypeFqjt = new FullyQualifiedJavaType(introspectedTable.getBaseRecordType());
+        paramRecord = JavaBeansUtil.getCamelCaseString(baseRecordTypeFqjt.getShortNameWithoutTypeArguments(), false);
+        super.initialized(introspectedTable);
     }
 
     @Override
@@ -128,7 +131,7 @@ public class XstudioServicePlugin extends PluginAdapter {
         Method setDefaults = new Method("setDefaults");
         setDefaults.addAnnotation(OVERRIDE);
         setDefaults.setVisibility(JavaVisibility.PUBLIC);
-        setDefaults.addParameter(new Parameter(baseRecordTypeFqjt, PARAM_RECORD));
+        setDefaults.addParameter(new Parameter(baseRecordTypeFqjt, paramRecord));
         topLevelClass.addImportedType(baseRecordTypeFqjt);
 
 
@@ -168,7 +171,7 @@ public class XstudioServicePlugin extends PluginAdapter {
             FullyQualifiedJavaType model = new FullyQualifiedJavaType(introspectedTable.getBaseRecordType());
             returnType.addTypeArgument(model);
             insertSelective.setReturnType(returnType);
-            insertSelective.addParameter(new Parameter(baseRecordTypeFqjt, PARAM_RECORD, annotationString.toString()));
+            insertSelective.addParameter(new Parameter(baseRecordTypeFqjt, paramRecord, annotationString.toString()));
             topLevelClass.addImportedType(baseRecordTypeFqjt);
             insertSelective.addAnnotation(OVERRIDE);
             StringBuilder stringBuilder = new StringBuilder("");
@@ -182,7 +185,7 @@ public class XstudioServicePlugin extends PluginAdapter {
             FullyQualifiedJavaType returnType2 = new FullyQualifiedJavaType(responseObject);
             returnType2.addTypeArgument(model);
             updateByPrimaryKeySelective.setReturnType(returnType);
-            updateByPrimaryKeySelective.addParameter(new Parameter(baseRecordTypeFqjt, PARAM_RECORD, annotationString.toString()));
+            updateByPrimaryKeySelective.addParameter(new Parameter(baseRecordTypeFqjt, paramRecord, annotationString.toString()));
             updateByPrimaryKeySelective.addAnnotation(OVERRIDE);
             StringBuilder stringBuilder2 = new StringBuilder("");
             stringBuilder2.append("return super.updateByPrimaryKeySelective(record)");
@@ -196,14 +199,14 @@ public class XstudioServicePlugin extends PluginAdapter {
                 String key = JavaBeansUtil.getCamelCaseString(keyColumn.getActualColumnName(), true);
                 if ("String".equals(keyColumn.getFullyQualifiedJavaType().getShortName())) {
                     StringBuilder sb = new StringBuilder();
-                    sb.append("if (record.get");
+                    sb.append("if (" + paramRecord + ".get");
                     sb.append(key);
-                    sb.append("() == null || \"\".equals(record.get");
+                    sb.append("() == null || \"\".equals(" + paramRecord + ".get");
                     sb.append(key);
                     sb.append("())) {");
                     setDefaults.addBodyLine(sb.toString());
                     sb = new StringBuilder();
-                    sb.append("record.set");
+                    sb.append(paramRecord + ".set");
                     sb.append(key);
                     sb.append("(");
                     sb.append("IdWorker.getIdString());");
@@ -211,12 +214,12 @@ public class XstudioServicePlugin extends PluginAdapter {
                     setDefaults.addBodyLine("}");
                 } else if ("Long".equals(keyColumn.getFullyQualifiedJavaType().getShortName())) {
                     StringBuilder sb = new StringBuilder();
-                    sb.append("if (record.get");
+                    sb.append("if (" + paramRecord + ".get");
                     sb.append(key);
                     sb.append("() == null) {");
                     setDefaults.addBodyLine(sb.toString());
                     sb = new StringBuilder();
-                    sb.append("record.set");
+                    sb.append(paramRecord + ".set");
                     sb.append(key);
                     sb.append("(");
                     sb.append("IdWorker.getId());");

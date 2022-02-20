@@ -17,7 +17,7 @@ public class CommentGeneratorPlugin extends DefaultCommentGenerator {
     @Override
     public void addFieldComment(Field field, IntrospectedTable introspectedTable, IntrospectedColumn introspectedColumn) {
         field.addJavaDocLine("/**");
-
+        field.addJavaDocLine(" * ");
         String remarks = introspectedColumn.getRemarks();
         if (StringUtility.stringHasValue(remarks)) {
             field.addJavaDocLine(" * ");
@@ -121,9 +121,12 @@ public class CommentGeneratorPlugin extends DefaultCommentGenerator {
     @Override
     public void addClassComment(InnerClass innerClass, IntrospectedTable introspectedTable) {
 
-        StringBuilder sb = new StringBuilder();
 
         innerClass.addJavaDocLine("/**");
+        innerClass.addJavaDocLine(" * @author xbeeant mybatis generator");
+        innerClass.addJavaDocLine(" * @version " + new Date());
+
+        StringBuilder sb = new StringBuilder();
         sb.append(" * ");
         sb.append(introspectedTable.getFullyQualifiedTable());
         innerClass.addJavaDocLine(sb.toString());
@@ -135,6 +138,8 @@ public class CommentGeneratorPlugin extends DefaultCommentGenerator {
     public void addModelClassComment(TopLevelClass topLevelClass, IntrospectedTable introspectedTable) {
         topLevelClass.addJavaDocLine("/**");
         topLevelClass.addJavaDocLine(" * ");
+        topLevelClass.addJavaDocLine(" * @author xbeeant mybatis generator");
+        topLevelClass.addJavaDocLine(" * @version " + new Date());
 
         String remarks = introspectedTable.getRemarks();
         if (StringUtility.stringHasValue(remarks)) {
@@ -158,7 +163,7 @@ public class CommentGeneratorPlugin extends DefaultCommentGenerator {
             anInterface.addJavaDocLine("/**");
             anInterface.addJavaDocLine(" * @author mybatis code generator");
             sb.append(" * @version ");
-            sb.append(new Date().toString());
+            sb.append(new Date());
             anInterface.addJavaDocLine(sb.toString());
             anInterface.addJavaDocLine(" */");
         }

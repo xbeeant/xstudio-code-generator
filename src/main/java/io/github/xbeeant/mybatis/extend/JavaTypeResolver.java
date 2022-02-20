@@ -17,5 +17,7 @@ public class JavaTypeResolver extends JavaTypeResolverDefaultImpl {
                 new FullyQualifiedJavaType(Integer.class.getName())));
         typeMap.put(Types.BIT, new JdbcTypeInformation("BIT",
                 new FullyQualifiedJavaType(Boolean.class.getName())));
+        typeMap.put(Types.BLOB, new JdbcTypeInformation("BLOB", //$NON-NLS-1$
+                new FullyQualifiedJavaType(String.class.getName()))); //$NON-NLS-1$
     }
 }

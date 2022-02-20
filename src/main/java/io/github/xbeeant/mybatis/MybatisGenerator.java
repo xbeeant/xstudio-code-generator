@@ -387,6 +387,7 @@ public class MybatisGenerator {
         if (properties.getPluginProperty().isEnableXstudioModelPlugin()) {
             pluginConfiguration = new PluginConfiguration();
             pluginConfiguration.setConfigurationType("io.github.xbeeant.mybatis.extend.plugins.XstudioModelPlugin");
+            pluginConfiguration.addProperty("usingBeginEnd", properties.getXstudioProperty().getBeginEnd());
             context.addPluginConfiguration(pluginConfiguration);
         }
 

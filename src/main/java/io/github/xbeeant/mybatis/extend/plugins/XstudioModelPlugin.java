@@ -5,6 +5,7 @@ import org.mybatis.generator.api.IntrospectedColumn;
 import org.mybatis.generator.api.IntrospectedTable;
 import org.mybatis.generator.api.PluginAdapter;
 import org.mybatis.generator.api.dom.java.*;
+import org.mybatis.generator.internal.util.JavaBeansUtil;
 
 import java.util.Arrays;
 import java.util.List;
@@ -15,23 +16,26 @@ import java.util.List;
  */
 public class XstudioModelPlugin extends PluginAdapter {
 
-    private static final List<String> ignoreFields = Arrays.asList(
+    private Boolean usingBeginEnd = false;
+
+    private static final List<String> IGNORE_FIELDS = Arrays.asList(
             "createBy", "updateBy", "createAt", "updateAt"
     );
 
-    private static final List<String> ignoreMethods = Arrays.asList(
+    private static final List<String> IGNORE_METHODS = Arrays.asList(
             "getCreateBy", "getUpdateBy", "getCreateAt", "getUpdateAt"
             , "setCreateBy", "setUpdateBy", "setCreateAt", "setUpdateAt"
     );
 
     @Override
     public boolean validate(List<String> warnings) {
+        usingBeginEnd = Boolean.valueOf(properties.getProperty("usingBeginEnd"));
         return true;
     }
 
     @Override
     public boolean modelFieldGenerated(Field field, TopLevelClass topLevelClass, IntrospectedColumn introspectedColumn, IntrospectedTable introspectedTable, ModelClassType modelClassType) {
-        if (ignoreFields.contains(field.getName())) {
+        if (IGNORE_FIELDS.contains(field.getName())) {
             return false;
         }
         return super.modelFieldGenerated(field, topLevelClass, introspectedColumn, introspectedTable, modelClassType);
@@ -39,7 +43,7 @@ public class XstudioModelPlugin extends PluginAdapter {
 
     @Override
     public boolean modelGetterMethodGenerated(Method method, TopLevelClass topLevelClass, IntrospectedColumn introspectedColumn, IntrospectedTable introspectedTable, ModelClassType modelClassType) {
-        if (ignoreMethods.contains(method.getName())) {
+        if (IGNORE_METHODS.contains(method.getName())) {
             return false;
         }
         return super.modelGetterMethodGenerated(method, topLevelClass, introspectedColumn, introspectedTable, modelClassType);
@@ -47,7 +51,7 @@ public class XstudioModelPlugin extends PluginAdapter {
 
     @Override
     public boolean modelSetterMethodGenerated(Method method, TopLevelClass topLevelClass, IntrospectedColumn introspectedColumn, IntrospectedTable introspectedTable, ModelClassType modelClassType) {
-        if (ignoreMethods.contains(method.getName())) {
+        if (IGNORE_METHODS.contains(method.getName())) {
             return false;
         }
         return super.modelSetterMethodGenerated(method, topLevelClass, introspectedColumn, introspectedTable, modelClassType);
@@ -91,6 +95,92 @@ public class XstudioModelPlugin extends PluginAdapter {
         }
 
         topLevelClass.addMethod(assignKeyValue);
+
+        if (Boolean.TRUE.equals(usingBeginEnd)) {
+            List<IntrospectedColumn> allColumns = introspectedTable.getAllColumns();
+            for (IntrospectedColumn column : allColumns) {
+                if (PluginUtil.time.contains(column.getJdbcTypeName())) {
+                    String begin = column.getJavaProperty() + "Begin";
+                    String end = column.getJavaProperty() + "End";
+                    topLevelClass.addField(new Field(begin, column.getFullyQualifiedJavaType()));
+                    topLevelClass.addField(new Field(end, column.getFullyQualifiedJavaType()));
+
+                    topLevelClass.addMethod(setMethod(introspectedTable, column, "Begin"));
+                    topLevelClass.addMethod(setMethod(introspectedTable, column, "End"));
+                    topLevelClass.addMethod(getMethod(introspectedTable, column, "Begin"));
+                    topLevelClass.addMethod(getMethod(introspectedTable, column, "End"));
+                }
+            }
+        }
+
         return super.modelBaseRecordClassGenerated(topLevelClass, introspectedTable);
+    }
+
+    private Method setMethod(IntrospectedTable introspectedTable, IntrospectedColumn column, String suffix) {
+        String field = JavaBeansUtil.getCamelCaseString(column.getJavaProperty(), true) + suffix;
+        Method method = new Method("set" + field);
+        method.setVisibility(JavaVisibility.PUBLIC);
+
+        method.addParameter(new Parameter(column.getFullyQualifiedJavaType(), "value"));
+        StringBuilder sb = new StringBuilder();
+        sb.append("this.");
+        sb.append(column.getJavaProperty());
+        sb.append(suffix);
+        sb.append(" = value;");
+        method.addBodyLine(sb.toString());
+
+        sb = new StringBuilder();
+        method.addJavaDocLine("/**");
+        sb.append(introspectedTable.getFullyQualifiedTable());
+        sb.append('.');
+        sb.append(column.getActualColumnName());
+        method.addJavaDocLine(sb.toString());
+
+        method.addJavaDocLine(" *");
+
+        Parameter parm = method.getParameters().get(0);
+        sb.append(" * @param ");
+        sb.append(parm.getName());
+        sb.append(" the value for ");
+        sb.append(introspectedTable.getFullyQualifiedTable());
+        sb.append('.');
+        sb.append(column.getActualColumnName());
+        method.addJavaDocLine(sb.toString());
+
+        method.addJavaDocLine(" */");
+
+        return method;
+    }
+
+    private Method getMethod(IntrospectedTable introspectedTable, IntrospectedColumn column, String suffix) {
+        String field = JavaBeansUtil.getCamelCaseString(column.getJavaProperty(), true) + suffix;
+        Method method = new Method("get" + field);
+        method.setVisibility(JavaVisibility.PUBLIC);
+        StringBuilder sb = new StringBuilder();
+        sb.append("return this.");
+        sb.append(column.getJavaProperty());
+        sb.append(suffix);
+        sb.append(";");
+
+
+        sb = new StringBuilder();
+        method.addJavaDocLine("/**");
+        sb.append(introspectedTable.getFullyQualifiedTable());
+        sb.append('.');
+        sb.append(column.getActualColumnName());
+        method.addJavaDocLine(sb.toString());
+
+        method.addJavaDocLine(" *");
+
+        Parameter parm = method.getParameters().get(0);
+        sb.append(" the value for ");
+        sb.append(introspectedTable.getFullyQualifiedTable());
+        sb.append('.');
+        sb.append(column.getActualColumnName());
+        method.addJavaDocLine(sb.toString());
+
+        method.addJavaDocLine(" */");
+
+        return method;
     }
 }
