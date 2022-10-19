@@ -323,7 +323,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
                             "new " + primaryKeyTypeFqjt.getShortNameWithoutTypeArguments() + "();");
                     for (IntrospectedColumn primaryKeyColumn : primaryKeyColumns) {
                         String keyProperty = primaryKeyColumn.getJavaProperty();
-                        String propertyMethod = JavaBeansUtil.getCamelCaseString(keyProperty, true);
+                        String propertyMethod = JavaBeansUtil.getCamelCaseString(primaryKeyColumn.getActualColumnName(), true);
                         setKey.addBodyLine("this." + keyProperty + " = key.get" + propertyMethod + "();");
                         getPrimaryKey.addBodyLine("key.set" + propertyMethod + "(this." + keyProperty + ");");
                     }
@@ -687,7 +687,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
         element.addAttribute(new Attribute("id", "batchDeleteByPrimaryKey"));
         element.addAttribute(new Attribute(parameterType, JAVA_UTIL_LIST));
         XmlElement foreachElement = new XmlElement(FOREACH);
-        foreachElement.addAttribute(new Attribute(COLLECTION, "list"));
+        foreachElement.addAttribute(new Attribute(COLLECTION, "items"));
         foreachElement.addAttribute(new Attribute(INDEX, INDEX));
         foreachElement.addAttribute(new Attribute("item", "item"));
         foreachElement.addAttribute(new Attribute(SEPARATOR, ";"));
@@ -696,9 +696,14 @@ public class XstudioMapperPlugin extends PluginAdapter {
         foreachElement.addElement(new TextElement("delete from " + introspectedTable.getFullyQualifiedTableNameAtRuntime()));
         XmlElement where = new XmlElement(WHERE);
         String and = "";
-        for (IntrospectedColumn primaryKeyColumn : introspectedTable.getPrimaryKeyColumns()) {
-            where.addElement(new TextElement(and + primaryKeyColumn.getActualColumnName() + " = #{item." + primaryKeyColumn.getJavaProperty() + JDBC_TYPE + primaryKeyColumn.getJdbcTypeName() + "}"));
-            and = "and ";
+        if (introspectedTable.getPrimaryKeyColumns().size() == 1) {
+            IntrospectedColumn primaryKeyColumn = introspectedTable.getPrimaryKeyColumns().get(0);
+            where.addElement(new TextElement(and + primaryKeyColumn.getActualColumnName() + " = #{" + primaryKeyColumn.getJavaProperty() + JDBC_TYPE + primaryKeyColumn.getJdbcTypeName() + "}"));
+        } else {
+            for (IntrospectedColumn primaryKeyColumn : introspectedTable.getPrimaryKeyColumns()) {
+                where.addElement(new TextElement(and + primaryKeyColumn.getActualColumnName() + " = #{item." + primaryKeyColumn.getJavaProperty() + JDBC_TYPE + primaryKeyColumn.getJdbcTypeName() + "}"));
+                and = "and ";
+            }
         }
         foreachElement.addElement(where);
         element.addElement(foreachElement);

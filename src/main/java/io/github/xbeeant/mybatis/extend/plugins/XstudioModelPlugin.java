@@ -16,16 +16,14 @@ import java.util.List;
  */
 public class XstudioModelPlugin extends PluginAdapter {
 
-    private Boolean usingBeginEnd = false;
-
     private static final List<String> IGNORE_FIELDS = Arrays.asList(
             "createBy", "updateBy", "createAt", "updateAt"
     );
-
     private static final List<String> IGNORE_METHODS = Arrays.asList(
             "getCreateBy", "getUpdateBy", "getCreateAt", "getUpdateAt"
             , "setCreateBy", "setUpdateBy", "setCreateAt", "setUpdateAt"
     );
+    private Boolean usingBeginEnd = false;
 
     @Override
     public boolean validate(List<String> warnings) {
@@ -99,11 +97,15 @@ public class XstudioModelPlugin extends PluginAdapter {
         if (Boolean.TRUE.equals(usingBeginEnd)) {
             List<IntrospectedColumn> allColumns = introspectedTable.getAllColumns();
             for (IntrospectedColumn column : allColumns) {
-                if (PluginUtil.time.contains(column.getJdbcTypeName())) {
+                if (!IGNORE_FIELDS.contains(column.getJavaProperty()) && PluginUtil.time.contains(column.getJdbcTypeName())) {
                     String begin = column.getJavaProperty() + "Begin";
                     String end = column.getJavaProperty() + "End";
-                    topLevelClass.addField(new Field(begin, column.getFullyQualifiedJavaType()));
-                    topLevelClass.addField(new Field(end, column.getFullyQualifiedJavaType()));
+                    Field beginField = new Field(begin, column.getFullyQualifiedJavaType());
+                    beginField.setVisibility(JavaVisibility.PRIVATE);
+                    Field endField = new Field(end, column.getFullyQualifiedJavaType());
+                    endField.setVisibility(JavaVisibility.PRIVATE);
+                    topLevelClass.addField(beginField);
+                    topLevelClass.addField(endField);
 
                     topLevelClass.addMethod(setMethod(introspectedTable, column, "Begin"));
                     topLevelClass.addMethod(setMethod(introspectedTable, column, "End"));
@@ -117,19 +119,14 @@ public class XstudioModelPlugin extends PluginAdapter {
     }
 
     private Method setMethod(IntrospectedTable introspectedTable, IntrospectedColumn column, String suffix) {
-        String field = JavaBeansUtil.getCamelCaseString(column.getJavaProperty(), true) + suffix;
+        String field = JavaBeansUtil.getCamelCaseString(column.getActualColumnName(), true) + suffix;
         Method method = new Method("set" + field);
         method.setVisibility(JavaVisibility.PUBLIC);
 
         method.addParameter(new Parameter(column.getFullyQualifiedJavaType(), "value"));
-        StringBuilder sb = new StringBuilder();
-        sb.append("this.");
-        sb.append(column.getJavaProperty());
-        sb.append(suffix);
-        sb.append(" = value;");
-        method.addBodyLine(sb.toString());
 
-        sb = new StringBuilder();
+
+        StringBuilder sb = new StringBuilder();
         method.addJavaDocLine("/**");
         sb.append(introspectedTable.getFullyQualifiedTable());
         sb.append('.');
@@ -139,6 +136,7 @@ public class XstudioModelPlugin extends PluginAdapter {
         method.addJavaDocLine(" *");
 
         Parameter parm = method.getParameters().get(0);
+        sb = new StringBuilder();
         sb.append(" * @param ");
         sb.append(parm.getName());
         sb.append(" the value for ");
@@ -149,37 +147,39 @@ public class XstudioModelPlugin extends PluginAdapter {
 
         method.addJavaDocLine(" */");
 
+        sb = new StringBuilder();
+        sb.append("this.");
+        sb.append(column.getJavaProperty());
+        sb.append(suffix);
+        sb.append(" = value;");
+        method.addBodyLine(sb.toString());
+
         return method;
     }
 
     private Method getMethod(IntrospectedTable introspectedTable, IntrospectedColumn column, String suffix) {
-        String field = JavaBeansUtil.getCamelCaseString(column.getJavaProperty(), true) + suffix;
+        String field = JavaBeansUtil.getCamelCaseString(column.getActualColumnName(), true) + suffix;
         Method method = new Method("get" + field);
         method.setVisibility(JavaVisibility.PUBLIC);
-        StringBuilder sb = new StringBuilder();
-        sb.append("return this.");
-        sb.append(column.getJavaProperty());
-        sb.append(suffix);
-        sb.append(";");
+        method.setReturnType(column.getFullyQualifiedJavaType());
 
-
-        sb = new StringBuilder();
         method.addJavaDocLine("/**");
-        sb.append(introspectedTable.getFullyQualifiedTable());
-        sb.append('.');
-        sb.append(column.getActualColumnName());
-        method.addJavaDocLine(sb.toString());
-
         method.addJavaDocLine(" *");
-
-        Parameter parm = method.getParameters().get(0);
+        StringBuilder sb = new StringBuilder();
         sb.append(" the value for ");
         sb.append(introspectedTable.getFullyQualifiedTable());
         sb.append('.');
         sb.append(column.getActualColumnName());
         method.addJavaDocLine(sb.toString());
-
         method.addJavaDocLine(" */");
+
+
+        sb = new StringBuilder();
+        sb.append("return ");
+        sb.append(column.getJavaProperty());
+        sb.append(suffix);
+        sb.append(";");
+        method.addBodyLine(sb.toString());
 
         return method;
     }
