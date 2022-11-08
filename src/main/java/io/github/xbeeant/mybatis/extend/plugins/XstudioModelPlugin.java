@@ -24,10 +24,12 @@ public class XstudioModelPlugin extends PluginAdapter {
             , "setCreateBy", "setUpdateBy", "setCreateAt", "setUpdateAt"
     );
     private Boolean usingBeginEnd = false;
+    private Boolean lombok = false;
 
     @Override
     public boolean validate(List<String> warnings) {
         usingBeginEnd = Boolean.valueOf(properties.getProperty("usingBeginEnd"));
+        lombok = Boolean.valueOf(properties.getProperty("lombok"));
         return true;
     }
 
@@ -41,7 +43,7 @@ public class XstudioModelPlugin extends PluginAdapter {
 
     @Override
     public boolean modelGetterMethodGenerated(Method method, TopLevelClass topLevelClass, IntrospectedColumn introspectedColumn, IntrospectedTable introspectedTable, ModelClassType modelClassType) {
-        if (IGNORE_METHODS.contains(method.getName())) {
+        if (IGNORE_METHODS.contains(method.getName()) || lombok) {
             return false;
         }
         return super.modelGetterMethodGenerated(method, topLevelClass, introspectedColumn, introspectedTable, modelClassType);
@@ -49,7 +51,7 @@ public class XstudioModelPlugin extends PluginAdapter {
 
     @Override
     public boolean modelSetterMethodGenerated(Method method, TopLevelClass topLevelClass, IntrospectedColumn introspectedColumn, IntrospectedTable introspectedTable, ModelClassType modelClassType) {
-        if (IGNORE_METHODS.contains(method.getName())) {
+        if (IGNORE_METHODS.contains(method.getName()) || lombok) {
             return false;
         }
         return super.modelSetterMethodGenerated(method, topLevelClass, introspectedColumn, introspectedTable, modelClassType);
@@ -107,12 +109,21 @@ public class XstudioModelPlugin extends PluginAdapter {
                     topLevelClass.addField(beginField);
                     topLevelClass.addField(endField);
 
-                    topLevelClass.addMethod(setMethod(introspectedTable, column, "Begin"));
-                    topLevelClass.addMethod(setMethod(introspectedTable, column, "End"));
-                    topLevelClass.addMethod(getMethod(introspectedTable, column, "Begin"));
-                    topLevelClass.addMethod(getMethod(introspectedTable, column, "End"));
+                    if (!lombok) {
+                        topLevelClass.addMethod(setMethod(introspectedTable, column, "Begin"));
+                        topLevelClass.addMethod(setMethod(introspectedTable, column, "End"));
+                        topLevelClass.addMethod(getMethod(introspectedTable, column, "Begin"));
+                        topLevelClass.addMethod(getMethod(introspectedTable, column, "End"));
+                    }
                 }
             }
+        }
+
+        if (lombok) {
+            topLevelClass.addAnnotation("@Getter");
+            topLevelClass.addAnnotation("@Setter");
+            topLevelClass.addImportedType(new FullyQualifiedJavaType("lombok.Getter"));
+            topLevelClass.addImportedType(new FullyQualifiedJavaType("lombok.Setter"));
         }
 
         return super.modelBaseRecordClassGenerated(topLevelClass, introspectedTable);

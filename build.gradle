@@ -4,8 +4,8 @@ plugins {
 }
 
 apply plugin: 'jacoco'
-apply plugin: 'maven'
 apply plugin: 'signing'
+apply plugin: 'maven-publish'
 
 group 'io.github.xbeeant'
 archivesBaseName = "code-generator"
@@ -46,18 +46,20 @@ repositories {
 dependencies {
     compile 'io.github.xbeeant:java-merger:1.0.0-SNAPSHOT'
 
-    compile group: 'org.mybatis.generator', name: 'mybatis-generator-core', version: '1.4.0'
+    compile group: 'org.mybatis.generator', name: 'mybatis-generator-core', version: '1.4.1'
 
     // driver for generator
-    compile group: 'mysql', name: 'mysql-connector-java', version: '8.0.11'
-    compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.48'
+    compile group: 'mysql', name: 'mysql-connector-java', version: '8.0.28'
     compile group: 'org.mariadb.jdbc', name: 'mariadb-java-client', version: '2.6.0'
 
-    implementation 'com.alibaba:fastjson:1.2.78'
+    implementation 'com.alibaba:fastjson:1.2.83'
 
-    testImplementation group: 'commons-io', name: 'commons-io', version: '2.6'
-    testImplementation(platform('org.junit:junit-bom:5.8.1'))
-    testImplementation('org.junit.jupiter:junit-jupiter:5.8.1')
+    implementation group: 'org.projectlombok', name: 'lombok', version: '1.18.24'
+    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.24'
+
+    testImplementation group: 'commons-io', name: 'commons-io', version: '2.7'
+    testImplementation(platform('org.junit:junit-bom:5.9.0'))
+    testImplementation('org.junit.jupiter:junit-jupiter:5.9.0')
 }
 
 
@@ -92,35 +94,17 @@ artifacts {
     archives sourceJar
 }
 
-signing {
-    sign configurations.archives
-}
+publishing {
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: System.getenv("user"), password: System.getenv("pwd"))
-            }
-
-            snapshotRepository(url: "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: System.getenv("user"), password: System.getenv("pwd"))
-            }
-
-            pom.project {
-                name 'Java Merger'
-                packaging 'jar'
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                name = 'code generator'
+                packaging = 'jar'
                 // optionally artifactId can be defined here
-                description 'a merger for different java class\'s '
-                url 'https://github.com/xbeeant/java-code-merger'
-
-                scm {
-                    connection = "https://github.com/xbeeant/java-code-merger"
-                    developerConnection = "https://github.com/xbeeant/java-code-merger"
-                    url = "https://github.com/xbeeant/java-code-merger"
-                }
+                description = 'code generator for project using mybatis'
+                url = 'https://github.com/xbeeant/xstudio'
 
                 licenses {
                     license {
@@ -135,9 +119,35 @@ uploadArchives {
                         email = "huangxb0512@gmail.com"
                     }
                 }
+                scm {
+                    connection = "https://github.com/xbeeant/xstudio"
+                    developerConnection = "https://github.com/xbeeant/xstudio"
+                    url = "https://github.com/xbeeant/xstudio/packages"
+                }
             }
         }
     }
+
+    repositories {
+        maven {
+            def releasesRepoUrl = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
+            def snapshotsRepoUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+            if (version.endsWith('-SNAPSHOT')) {
+                url = snapshotsRepoUrl
+            } else {
+                url = releasesRepoUrl
+            }
+
+            credentials {
+                username = System.getenv("user")
+                password = System.getenv("pwd")
+            }
+        }
+    }
+}
+
+signing {
+    sign publishing.publications.mavenJava
 }
 
 javadoc {

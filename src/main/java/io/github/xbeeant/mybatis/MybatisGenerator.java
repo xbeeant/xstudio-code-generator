@@ -388,6 +388,7 @@ public class MybatisGenerator {
             pluginConfiguration = new PluginConfiguration();
             pluginConfiguration.setConfigurationType("io.github.xbeeant.mybatis.extend.plugins.XstudioModelPlugin");
             pluginConfiguration.addProperty("usingBeginEnd", properties.getXstudioProperty().getBeginEnd());
+            pluginConfiguration.addProperty("lombok", properties.getXstudioProperty().getLombok());
             context.addPluginConfiguration(pluginConfiguration);
         }
 

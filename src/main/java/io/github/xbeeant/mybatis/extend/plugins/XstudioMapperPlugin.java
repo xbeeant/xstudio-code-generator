@@ -30,10 +30,9 @@ public class XstudioMapperPlugin extends PluginAdapter {
     public static final String INDEX = "index";
     public static final String COLLECTION = "collection";
     public static final String SEPARATOR = "separator";
-
+    private static final String EXAMPLE_PREFIX = "example.";
     private final List<String> nonFuzzySearchColumn = new ArrayList<>();
     private final String parameterType = "parameterType";
-    private static final String EXAMPLE_PREFIX = "example.";
     private Boolean usingBeginEnd = false;
     private Boolean usingDateTime = false;
     private boolean generated = false;
@@ -473,8 +472,44 @@ public class XstudioMapperPlugin extends PluginAdapter {
         // parameterType="map"
         element.getAttributes().removeIf(attribute -> parameterType.equals(attribute.getName()));
 
-        replaceWithWhereExampleElement(element);
+        replaceRowWithRecord(element, introspectedTable);
+
         return super.sqlMapUpdateByExampleSelectiveElementGenerated(element, introspectedTable);
+    }
+
+    private void replaceRowWithRecord(XmlElement element, IntrospectedTable introspectedTable) {
+
+        List<VisitableElement> elements = element.getElements();
+        VisitableElement conditionVisitableElement = elements.get(elements.size() - 1);
+        VisitableElement visitableElement = elements.get(elements.size() - 2);
+        // remove
+        // <if test="_parameter != null">
+        //      <include refid="Example_Where_Clause" />
+        //    </if>
+        XmlElement setElement = new XmlElement("SET");
+
+        XmlElement sourceXmlElements = (XmlElement) visitableElement;
+        for (VisitableElement sourceXmlElement : sourceXmlElements.getElements()) {
+            XmlElement test = (XmlElement) sourceXmlElement;
+            XmlElement xmlElement = new XmlElement(test.getName());
+            for (Attribute attribute : test.getAttributes()) {
+                xmlElement.addAttribute(new Attribute(attribute.getName(), attribute.getValue().replace("row.", "record.")));
+            }
+
+            for (VisitableElement testElement : test.getElements()) {
+                TextElement textElement = (TextElement) testElement;
+                xmlElement.addElement(new TextElement(textElement.getContent().replace("#{row", "#{record")));
+            }
+            setElement.addElement(xmlElement);
+        }
+
+        elements.remove(visitableElement);
+        elements.add(setElement);
+
+        elements.remove(conditionVisitableElement);
+        XmlElement whereElement = new XmlElement(WHERE);
+        PluginUtil.addInclude(whereElement, PREFIXED_EXAMPLE_WHERE_CLAUSE);
+        elements.add(whereElement);
     }
 
     @Override
@@ -556,13 +591,18 @@ public class XstudioMapperPlugin extends PluginAdapter {
 
         List<IntrospectedColumn> primaryKeyColumns = introspectedTable.getPrimaryKeyColumns();
         element.getElements().add(new TextElement("where"));
+
         for (IntrospectedColumn column : primaryKeyColumns) {
             sb = new StringBuilder();
             sb.append(context.getBeginningDelimiter());
             sb.append(column.getActualColumnName());
             sb.append(context.getEndingDelimiter());
             sb.append(" = ");
-            sb.append(PluginUtil.columnValue(column, "record.", typeHandlers.get(column.getActualColumnName()), false));
+            if (primaryKeyColumns.size() == 1) {
+                sb.append(PluginUtil.columnValue(column, "", typeHandlers.get(column.getActualColumnName()), false));
+            } else {
+                sb.append(PluginUtil.columnValue(column, "record.", typeHandlers.get(column.getActualColumnName()), false));
+            }
             if (columnCount > 1) {
                 sb.append("and");
             }
@@ -698,7 +738,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
         String and = "";
         if (introspectedTable.getPrimaryKeyColumns().size() == 1) {
             IntrospectedColumn primaryKeyColumn = introspectedTable.getPrimaryKeyColumns().get(0);
-            where.addElement(new TextElement(and + primaryKeyColumn.getActualColumnName() + " = #{" + primaryKeyColumn.getJavaProperty() + JDBC_TYPE + primaryKeyColumn.getJdbcTypeName() + "}"));
+            where.addElement(new TextElement(and + primaryKeyColumn.getActualColumnName() + " = #{item" + JDBC_TYPE + primaryKeyColumn.getJdbcTypeName() + "}"));
         } else {
             for (IntrospectedColumn primaryKeyColumn : introspectedTable.getPrimaryKeyColumns()) {
                 where.addElement(new TextElement(and + primaryKeyColumn.getActualColumnName() + " = #{item." + primaryKeyColumn.getJavaProperty() + JDBC_TYPE + primaryKeyColumn.getJdbcTypeName() + "}"));

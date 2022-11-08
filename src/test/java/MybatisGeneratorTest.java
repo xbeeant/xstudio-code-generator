@@ -19,34 +19,33 @@ class MybatisGeneratorTest {
         Properties properties = new Properties();
         ConnectionProperty connectionProperty = new ConnectionProperty();
         connectionProperty.setDriverClass("com.mysql.cj.jdbc.Driver");
-        connectionProperty.setPassword("");
-        connectionProperty.setUrl("jdbc:mysql://localhost:3306/eoffice?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=CONVERT_TO_NULL&serverTimezone=UTC&allowMultiQueries=true&autoReconnect=true");
-        connectionProperty.setUser("root");
+        connectionProperty.setPassword("123456");
+        connectionProperty.setUrl("jdbc:mysql://localhost:3306/forum?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=CONVERT_TO_NULL&serverTimezone=UTC&allowMultiQueries=true&autoReconnect=true");
+        connectionProperty.setUser("app");
         properties.setConnectionProperty(connectionProperty);
 
         JavaClientProperty javaClientProperty = new JavaClientProperty();
-        javaClientProperty.setTargetProject("G:\\codes\\springboot-demo\\src\\main\\java");
-        javaClientProperty.setTargetPackage("com.xstudio.easy.admin.mapper");
-        javaClientProperty.setRootInterface("com.xstudio.spring.mybatis.pagehelper.IMybatisPageHelperDao");
+        javaClientProperty.setTargetProject("G:\\xstudio\\forum\\forum-server\\src\\main\\java");
+        javaClientProperty.setTargetPackage("com.changan.soft.forum.mapper");
+        javaClientProperty.setRootInterface("io.github.xbeeant.spring.mybatis.pagehelper.IMybatisPageHelperDao");
 
         properties.setJavaClientProperty(javaClientProperty);
 
         JavaModelProperty javaModelProperty = new JavaModelProperty();
-        javaModelProperty.setTargetProject("G:\\codes\\springboot-demo\\src\\main\\java");
-        javaModelProperty.setTargetPackage("com.xstudio.easy.admin.model");
-        javaModelProperty.setRootClass("com.xstudio.core.BaseModelObject");
+        javaModelProperty.setTargetProject("G:\\xstudio\\forum\\forum-server\\src\\main\\java");
+        javaModelProperty.setTargetPackage("com.changan.soft.forum.model");
+        javaModelProperty.setRootClass("io.github.xbeeant.core.BaseModelObject");
         javaModelProperty.setTrimStrings(true);
         properties.setJavaModelProperty(javaModelProperty);
 
         SqlMapProperty sqlMapProperty = new SqlMapProperty();
-        sqlMapProperty.setTargetProject("G:\\codes\\springboot-demo\\src\\main\\resources");
-        sqlMapProperty.setTargetPackage("mybatis.mysql.easy_admin");
+        sqlMapProperty.setTargetProject("G:\\xstudio\\forum\\forum-server\\src\\main\\resources");
+        sqlMapProperty.setTargetPackage("mybatis.mysql.forum");
         properties.setSqlMapProperty(sqlMapProperty);
 
         TableProperty tableProperty = new TableProperty();
-        tableProperty.setTableName("eoffice_doc_template_cat");
-        tableProperty.setSchema("");
-        tableProperty.setCatalog("eoffice");
+        tableProperty.setTableName("category");
+        tableProperty.setSchema("forum");
         tableProperty.setModelType(ModelType.FLAT);
 
         DomainObjectRenamingRule domainObjectRenamingRule = new DomainObjectRenamingRule();
@@ -58,13 +57,15 @@ class MybatisGeneratorTest {
         properties.setTableProperty(tableProperty);
 
         XstudioProperty xstudioProperty = new XstudioProperty();
-        xstudioProperty.setServiceRootInterface("com.xstudio.spring.mybatis.pagehelper.IMybatisPageHelperService");
-        xstudioProperty.setServiceTargetPackage("com.xstudio.easy.admin.service");
-        xstudioProperty.setServiceImplementRootInterface("com.xstudio.easy.admin.config.AbstractSecurityMybatisPageHelperServiceImpl");
-        xstudioProperty.setServiceImplementTargetPackage("com.xstudio.easy.admin.service.impl");
-        xstudioProperty.setRootClient("com.xstudio.spring.mybatis.pagehelper.IMybatisPageHelperDao");
-        xstudioProperty.setIdGenerator("com.xstudio.core.IdWorker");
-        xstudioProperty.setResponseObject("com.xstudio.core.ApiResponse");
+        xstudioProperty.setServiceRootInterface("io.github.xbeeant.spring.mybatis.pagehelper.IMybatisPageHelperService");
+        xstudioProperty.setServiceTargetPackage("com.changan.soft.forum.service");
+        xstudioProperty.setServiceImplementRootInterface("com.changan.soft.forum.config.AbstractSecurityMybatisPageHelperServiceImpl");
+        xstudioProperty.setServiceImplementTargetPackage("com.changan.soft.forum.service.impl");
+        xstudioProperty.setRootClient("io.github.xbeeant.spring.mybatis.pagehelper.IMybatisPageHelperDao");
+        xstudioProperty.setIdGenerator("io.github.xbeeant.core.IdWorker");
+        xstudioProperty.setResponseObject("io.github.xbeeant.core.ApiResponse");
+        xstudioProperty.setLombok("true");
+        xstudioProperty.setBeginEnd("false");
         properties.setXstudioProperty(xstudioProperty);
 
         PluginProperty pluginProperty = new PluginProperty();
