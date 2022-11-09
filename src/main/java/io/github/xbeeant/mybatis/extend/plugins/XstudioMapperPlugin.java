@@ -486,7 +486,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
         // <if test="_parameter != null">
         //      <include refid="Example_Where_Clause" />
         //    </if>
-        XmlElement setElement = new XmlElement("SET");
+        XmlElement setElement = new XmlElement("set");
 
         XmlElement sourceXmlElements = (XmlElement) visitableElement;
         for (VisitableElement sourceXmlElement : sourceXmlElements.getElements()) {
