@@ -592,18 +592,19 @@ public class XstudioMapperPlugin extends PluginAdapter {
         List<IntrospectedColumn> primaryKeyColumns = introspectedTable.getPrimaryKeyColumns();
         element.getElements().add(new TextElement("where"));
 
+        int primaryKeySize = primaryKeyColumns.size();
         for (IntrospectedColumn column : primaryKeyColumns) {
             sb = new StringBuilder();
             sb.append(context.getBeginningDelimiter());
             sb.append(column.getActualColumnName());
             sb.append(context.getEndingDelimiter());
             sb.append(" = ");
-            if (primaryKeyColumns.size() == 1) {
+            if (primaryKeySize == 1) {
                 sb.append(PluginUtil.columnValue(column, "", typeHandlers.get(column.getActualColumnName()), false));
             } else {
                 sb.append(PluginUtil.columnValue(column, "record.", typeHandlers.get(column.getActualColumnName()), false));
             }
-            if (columnCount > 1) {
+            if (primaryKeySize > 1) {
                 sb.append("and");
             }
             columnCount -= 1;
