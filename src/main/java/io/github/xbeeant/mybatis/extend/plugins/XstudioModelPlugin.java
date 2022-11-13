@@ -122,8 +122,10 @@ public class XstudioModelPlugin extends PluginAdapter {
         if (lombok) {
             topLevelClass.addAnnotation("@Getter");
             topLevelClass.addAnnotation("@Setter");
+            topLevelClass.addAnnotation("@Builder");
             topLevelClass.addImportedType(new FullyQualifiedJavaType("lombok.Getter"));
-            topLevelClass.addImportedType(new FullyQualifiedJavaType("lombok.Setter"));
+            topLevelClass.addImportedType(new FullyQualifiedJavaType("lombok.Getter"));
+            topLevelClass.addImportedType(new FullyQualifiedJavaType("lombok.Builder"));
         }
 
         return super.modelBaseRecordClassGenerated(topLevelClass, introspectedTable);
