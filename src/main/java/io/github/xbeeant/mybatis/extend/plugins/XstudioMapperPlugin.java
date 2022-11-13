@@ -581,7 +581,7 @@ public class XstudioMapperPlugin extends PluginAdapter {
             sb.append(column.getActualColumnName());
             sb.append(context.getEndingDelimiter());
             sb.append(" = ");
-            sb.append(PluginUtil.columnValue(column, "", typeHandlers.get(column.getActualColumnName()), false));
+            sb.append(PluginUtil.columnValue(column, "record.", typeHandlers.get(column.getActualColumnName()), false));
             if (columnCount > 1) {
                 sb.append(",");
             }
@@ -593,18 +593,15 @@ public class XstudioMapperPlugin extends PluginAdapter {
         element.getElements().add(new TextElement("where"));
 
         int primaryKeySize = primaryKeyColumns.size();
+        columnCount = primaryKeySize;
         for (IntrospectedColumn column : primaryKeyColumns) {
             sb = new StringBuilder();
             sb.append(context.getBeginningDelimiter());
             sb.append(column.getActualColumnName());
             sb.append(context.getEndingDelimiter());
             sb.append(" = ");
-            if (primaryKeySize == 1) {
-                sb.append(PluginUtil.columnValue(column, "", typeHandlers.get(column.getActualColumnName()), false));
-            } else {
-                sb.append(PluginUtil.columnValue(column, "record.", typeHandlers.get(column.getActualColumnName()), false));
-            }
-            if (primaryKeySize > 1) {
+            sb.append(PluginUtil.columnValue(column, "record.", typeHandlers.get(column.getActualColumnName()), false));
+            if (columnCount > 1) {
                 sb.append("and");
             }
             columnCount -= 1;
@@ -626,11 +623,8 @@ public class XstudioMapperPlugin extends PluginAdapter {
         element.getElements().add(new TextElement("update " + introspectedTable.getFullyQualifiedTableNameAtRuntime() + " set "));
 
         StringBuilder sb;
-        int columnCount = introspectedTable.getNonPrimaryKeyColumns().size();
-        for (IntrospectedColumn column : introspectedTable.getNonPrimaryKeyColumns()) {
-            if (column.isBLOBColumn()) {
-                continue;
-            }
+        int columnCount = introspectedTable.getNonBLOBColumns().size();
+        for (IntrospectedColumn column : introspectedTable.getNonBLOBColumns()) {
             sb = new StringBuilder();
             sb.append(context.getBeginningDelimiter());
             sb.append(column.getActualColumnName());
@@ -640,12 +634,13 @@ public class XstudioMapperPlugin extends PluginAdapter {
             if (columnCount > 1) {
                 sb.append(",");
             }
-            columnCount -= 1;
             element.getElements().add(new TextElement(sb.toString()));
+            columnCount -= 1;
         }
 
         List<IntrospectedColumn> primaryKeyColumns = introspectedTable.getPrimaryKeyColumns();
         element.getElements().add(new TextElement("where"));
+        columnCount = primaryKeyColumns.size();
         for (IntrospectedColumn column : primaryKeyColumns) {
             sb = new StringBuilder();
             sb.append(context.getBeginningDelimiter());

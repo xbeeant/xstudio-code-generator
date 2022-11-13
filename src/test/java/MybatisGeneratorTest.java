@@ -19,9 +19,9 @@ class MybatisGeneratorTest {
         Properties properties = new Properties();
         ConnectionProperty connectionProperty = new ConnectionProperty();
         connectionProperty.setDriverClass("com.mysql.cj.jdbc.Driver");
-        connectionProperty.setPassword("123456");
+        connectionProperty.setPassword("");
         connectionProperty.setUrl("jdbc:mysql://localhost:3306/forum?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=CONVERT_TO_NULL&serverTimezone=UTC&allowMultiQueries=true&autoReconnect=true");
-        connectionProperty.setUser("app");
+        connectionProperty.setUser("root");
         properties.setConnectionProperty(connectionProperty);
 
         JavaClientProperty javaClientProperty = new JavaClientProperty();
