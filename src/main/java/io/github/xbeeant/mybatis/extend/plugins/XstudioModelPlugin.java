@@ -124,7 +124,7 @@ public class XstudioModelPlugin extends PluginAdapter {
             topLevelClass.addAnnotation("@Setter");
             topLevelClass.addAnnotation("@Builder");
             topLevelClass.addImportedType(new FullyQualifiedJavaType("lombok.Getter"));
-            topLevelClass.addImportedType(new FullyQualifiedJavaType("lombok.Getter"));
+            topLevelClass.addImportedType(new FullyQualifiedJavaType("lombok.Setter"));
             topLevelClass.addImportedType(new FullyQualifiedJavaType("lombok.Builder"));
         }
 
